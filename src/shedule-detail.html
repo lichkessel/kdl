@@ -1,0 +1,55 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+
+<link rel="import" href="../bower_components/app-route/app-location.html">
+<link rel="import" href="../bower_components/app-route/app-route.html">
+<link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
+
+<link rel="import" href="../bower_components/paper-spinner/paper-spinner.html">
+<link rel="import" href="./owed-list.html">
+
+<dom-module id="class-detail">
+  <template>
+    <style>
+    </style>
+    <app-location use-hash-as-path route="{{route}}"></app-location>
+    <app-route route="{{route}}" pattern="/shedule-detail/:id" data="{{routeData}}"></app-route>
+    <iron-ajax auto 
+      url="http://jsonplaceholder.typicode.com/posts/{{routeData.id}}" 
+      last-response="{{sheduleDetail}}"
+      last-error="{{error}}"
+      loading="{{loadingDetail}}"><!-- userId id title body --></iron-ajax>
+    <paper-spinner active$="{{loadingDetail}}" style="position:absolute;top:50%;left:50%;margin-left:-32px;margin-right:-32px"></paper-spinner>
+    <div hidden$="{{loadingDetail}}">{{sheduleDetail.body}}</div>
+    <!--/posts/1/comments-->
+    <iron-ajax auto 
+      url="http://jsonplaceholder.typicode.com/posts/{{routeData.id}}/comments" 
+      last-response="{{classStudents}}"
+      last-error="{{error}}"
+      loading="{{loadingStudents}}"><!-- userId id title body --></iron-ajax>
+    <div>
+      <paper-spinner active$="{{loadingStudents}}"></paper-spinner>
+      <ol hidden$="{{loadingStudents}}">
+        <template is="dom-repeat" items="{{classStudents}}" >
+          <li>
+            <div>[[item.name]]</div>
+            <button on-click="_toggleOwed">toggle</button>
+            <div hidden$="{{!item.expanded}}">
+              <owed-list student-id="{{item.id}}" expanded="{{item.expanded}}"></owed-list>
+            </div>
+           </li>
+        </template>
+      </ol>
+    </div>
+  </template>
+  <script>
+    Polymer({
+      is : "class-detail",
+      properties : {
+
+      },
+      _toggleOwed : function(e) {
+        e.model.set('item.expanded', !e.model.item.expanded);
+      }
+    });
+  </script>
+</dom-module>

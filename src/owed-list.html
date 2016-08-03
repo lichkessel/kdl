@@ -1,0 +1,45 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+
+<link rel="import" href="../bower_components/app-route/app-location.html">
+<link rel="import" href="../bower_components/app-route/app-route.html">
+<link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
+
+<dom-module id="owed-list">
+  <template>
+    <iron-ajax 
+      url="http://jsonplaceholder.typicode.com/posts?userId={{studentId}}" 
+      last-response="{{owedPayments}}"
+      last-error="{{error}}"
+      loading="{{loadingOwed}}"></iron-ajax>
+
+        <ol hidden$="{{loadingOwed}}">
+          <template is="dom-repeat" items="{{owedPayments}}">
+            <li>[[item.title]]</li>
+          </template>
+        </ol>
+
+  </template>
+
+  <script>
+    Polymer({
+      is : "owed-list",
+      properties : {
+        expanded : {
+          type: Boolean,
+          notify:true,
+          observer : '_expandChanged'
+        },
+        studentId : {
+          type: String,
+          notify : true
+        }
+      },
+      
+      _expandChanged : function(expanded) {
+        if(expanded) { this.$$('iron-ajax').generateRequest() }
+      },
+      ready : function() {
+      }
+    });
+  </script>
+</dom-module>

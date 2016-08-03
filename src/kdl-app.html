@@ -1,0 +1,117 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+
+<link rel="import" href="../bower_components/app-route/app-location.html">
+<link rel="import" href="../bower_components/app-route/app-route.html">
+
+<link rel="import" href="../bower_components/app-layout/app-drawer-layout/app-drawer-layout.html">
+<link rel="import" href="../bower_components/app-layout/app-drawer/app-drawer.html">
+<link rel="import" href="../bower_components/app-layout/app-scroll-effects/app-scroll-effects.html">
+<link rel="import" href="../bower_components/app-layout/app-header/app-header.html">
+<link rel="import" href="../bower_components/app-layout/app-header-layout/app-header-layout.html">
+<link rel="import" href="../bower_components/app-layout/app-toolbar/app-toolbar.html">
+
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+
+<link rel="import" href="../bower_components/iron-pages/iron-pages.html">
+<link rel="import" href="../bower_components/iron-selector/iron-selector.html">
+
+<link rel="import" href="../bower_components/paper-tabs/paper-tabs.html">
+
+<link rel="import" href="./kdl-icons.html">
+
+<dom-module id="kdl-app">
+  <template>
+    <style>
+      :host {
+        display: block;
+        --app-primary-color: #7030a0;
+        --app-secondary-color: white;
+      }
+      app-header {
+        position:fixed;
+        background-color: var(--app-primary-color);
+        color: var(--app-secondary-color);
+      }
+      app-header paper-icon-button {
+        --paper-icon-button-ink-color: white;
+      }
+      paper-tab a {
+        display:inline-flex;
+        color:white;
+        text-decoration:none;
+        justify-content:center;
+        align-items:center;
+      }
+    </style>
+
+    <app-location use-hash-as-path route="{{route}}"></app-location>
+    <app-route route="{{route}}" pattern="/:page" data="{{routeData}}"></app-route>
+
+    <app-header-layout>
+      <app-header condenses reveals fixed effects="waterfall">
+        <app-toolbar>
+          <div>Welcome!</div>
+        </app-toolbar>
+        <paper-tabs attr-for-selected="name" selected="{{page}}" sticky on-iron-activate="_reload">
+            <paper-tab name="shedule-list">Existing classes</paper-tab>
+            <paper-tab name="student-list">Students</paper-tab>
+            <paper-tab name="class-list">Classes</paper-tab>
+            <paper-tab name="price-list">Pricelists</paper-tab>
+        </paper-tabs>
+      </app-header>
+    </app-header-layout>
+
+    <iron-pages attr-for-selected="name" selected="{{page}}">
+      <class-main name="shedule-list"></class-main>
+      <class-detail name="shedule-detail"></class-detail>
+      <student-list name="student-list"></student-list>
+      <price-list name="price-list"></price-list>
+      <class-list name="class-list"></class-list>
+    </iron-pages>
+    
+  </template>
+
+  <script>
+  /*
+    /
+    /classes
+    /students
+    /pricelists
+  */
+    Polymer({
+
+      is: 'kdl-app',
+
+      properties: {
+        page : {
+          type : String,
+          notify : true,
+          observer : '_pageChanged'
+        }
+      },
+
+      observers: [
+        '_routePageChanged(routeData.page)'
+      ],
+      _reload: function(e) {
+        if(e.detail.selected === this.page) {
+          this.$$('iron-pages [name="'+this.page+'"]').reload();
+        }
+      },
+      _routePageChanged: function(page) {
+        this.page = page || 'shedule-list';
+      },
+      _pageChanged: function(page) {
+        // load page import on demand.
+        this.importHref( this.resolveUrl(page + '.html'), null, null, true);
+        //this.set('route.path','/'+page);
+      },
+      ready : function() {
+        //this.page = "class-main";
+        //var self= this;
+        //setTimeout(function() { self.$$('paper-tabs').selectIndex('0') },1000);
+      }
+
+    });
+  </script>
+</dom-module>

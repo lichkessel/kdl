@@ -1,0 +1,42 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/paper-spinner/paper-spinner.html">
+
+<link rel="import" href="../bower_components/app-route/app-location.html">
+<link rel="import" href="../bower_components/app-route/app-route.html">
+<link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
+
+
+<dom-module id="student-list">
+  <template>
+    <paper-spinner active></paper-spinner>
+    <iron-ajax auto 
+      url="http://jsonplaceholder.typicode.com/posts/{{routeData.id}}" 
+      last-response="{{sheduleDetail}}"
+      last-error="{{error}}"
+      loading="{{loadingDetail}}"><!-- userId id title body --></iron-ajax>
+  </template>
+  <script>
+    Polymer({
+      is: 'student-list',
+      properties : {
+        students : {
+          type: Array,
+          notify: true,
+          value : []
+        }
+      },
+      ready: function() {
+
+
+        //console.log(this);
+        //this.$$('iron-list').fire('iron-resize');
+        //var self = this;
+        //setTimeout(function() {self.push('students',{first:'1',last:'2'})}, 1000)
+        /*this.students = [
+            {first: 'Bob', last: 'Smith'},
+            {first: 'Sally', last: 'Johnson'}
+        ];*/
+      }
+    });
+  </script>
+</dom-module>

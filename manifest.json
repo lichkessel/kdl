@@ -1,0 +1,7 @@
+{
+  "name": "kdl",
+  "short_name": "kdl",
+  "description": "kdl site front-end",
+  "start_url": "/",
+  "display": "standalone"
+}

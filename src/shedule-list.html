@@ -1,0 +1,52 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
+
+<link rel="import" href="../bower_components/paper-spinner/paper-spinner.html">
+
+<dom-module id="class-main">
+  <template>
+    <style>
+    [shedule-item] {
+      margin:2%;
+      box-shadow:0 0 0.3em rgba(0,0,0,0.2);
+      padding:2%;
+    }
+    </style>
+
+    <iron-ajax id="ajax" auto
+      url="http://jsonplaceholder.typicode.com/posts" 
+      last-response="{{shedule}}" 
+      last-error="{{error}}" 
+      loading="{{loading}}"><!-- userId id title body --></iron-ajax>
+
+    <paper-spinner active$="{{loading}}" style="position:absolute;top:50%;left:50%;margin-left:-32px;margin-right:-32px"></paper-spinner>
+    <template is="dom-repeat" items="{{shedule}}" as="item" initial-count="20">
+      <div shedule-item><a href="#/shedule-detail/[[item.id]]">[[item.title]]</a></div>
+    </template>
+  </template>
+  <script>
+    Polymer({
+      is:'class-main',
+      properties : {
+        shedule : {
+          type: Array,
+          notify:true
+        }
+      },
+      reload : function() {
+        this.splice('shedule',0,this.shedule.length);
+        this.$.ajax.generateRequest();
+      },
+      ready : function() {
+        /*this.async(function() {
+          this.$$('paper-spinner').active = false;
+          this.set('classes', [
+            {id: '1', name: 'Special dances', start_date:'2014-01-02', end_date:'2014-03-01' }
+            ,{id: '2', name: 'Irish Special dances', start_date:'2015-01-02', end_date:'2015-03-01' }
+            ]);
+           this.$$('iron-list').fire('iron-resize')
+        },1000);*/
+      }
+    });
+  </script>
+</dom-module>
