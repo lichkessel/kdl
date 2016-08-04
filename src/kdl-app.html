@@ -16,6 +16,7 @@
 <link rel="import" href="../bower_components/iron-selector/iron-selector.html">
 
 <link rel="import" href="../bower_components/paper-tabs/paper-tabs.html">
+<link rel="import" href="../bower_components/paper-spinner/paper-spinner.html">
 
 <link rel="import" href="./kdl-icons.html">
 
@@ -27,6 +28,10 @@
         --app-primary-color: #7030a0;
         --app-secondary-color: white;
       }
+      app-header-layout
+      {
+        z-index:3;
+      }
       app-header {
         position:fixed;
         background-color: var(--app-primary-color);
@@ -35,13 +40,17 @@
       app-header paper-icon-button {
         --paper-icon-button-ink-color: white;
       }
-      paper-tab a {
-        display:inline-flex;
-        color:white;
-        text-decoration:none;
+      [spinner] 
+      {
+        display:flex;
+        width:100vw;
+        height:100vh;
         justify-content:center;
         align-items:center;
+        top:0;
+        position:fixed;
       }
+      [spinner][hidden] {display:none}
     </style>
 
     <app-header-layout>
@@ -57,14 +66,14 @@
         </paper-tabs>
       </app-header>
     </app-header-layout>
-
     <iron-pages attr-for-selected="id" selected="{{page}}">
-      <class-main id="shedule-list" class-id="{{classId}}" page="{{page}}"></class-main>
-      <class-detail id="shedule-detail" class-id="{{classId}}"></class-detail>
-      <student-list id="student-list"></student-list>
-      <price-list id="price-list"></price-list>
-      <class-list id="class-list"></class-list>
+      <class-main id="shedule-list" class-id="{{classId}}" page="{{page}}" page-ready="{{pageReady}}"></class-main>
+      <class-detail id="shedule-detail" class-id="{{classId}}" page-ready="{{pageReady}}"></class-detail>
+      <student-list id="student-list" page-ready="{{pageReady}}"></student-list>
+      <price-list id="price-list" page-ready="{{pageReady}}"></price-list>
+      <class-list id="class-list" page-ready="{{pageReady}}"></class-list>
     </iron-pages>
+    <div spinner hidden="{{pageReady}}"><paper-spinner active></paper-spinner></div>
     
   </template>
 
@@ -88,7 +97,7 @@
       },
       _reload: function(e) {
         if(e.detail.selected === this.page) {
-          this.$[this.page]._reload();
+          this.$[this.page].ready();
         }
       },
       //_routePageChanged: function(page) {

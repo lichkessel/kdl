@@ -1,7 +1,6 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
 <link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
 
-<link rel="import" href="../bower_components/paper-spinner/paper-spinner.html">
 <!--link rel="import" href="../bower_components/iron-fit-behavior/iron-fit-behavior.html"-->
 
 <dom-module id="class-main">
@@ -21,8 +20,6 @@
       last-error="{{error}}" 
       loading="{{loading}}"><!-- userId id title body --></iron-ajax>
 
-    <!--paper-spinner active$="{{loading}}" style="position:absolute;top:50%;left:50%;margin-left:-32px;margin-right:-32px"></paper-spinner-->
-    <div shedule-item hidden$="{{!loading}}"><paper-spinner active$="{{loading}}"></paper-spinner></div>
     <template is="dom-repeat" items="{{shedules}}" as="item" initial-count="20">
       <div shedule-item on-tap="_viewClass">[[item.title]]</div>
     </template>
@@ -42,6 +39,16 @@
         },
         shedules : {
           type: Array,
+          notify:true,
+          value : []
+        },
+        loading : {
+          type: Boolean,
+          notify: true,
+          observer: '_load'
+        },
+        pageReady : {
+          type: Boolean,
           notify:true
         }
       },
@@ -49,12 +56,13 @@
         this.set('classId',e.model.item.id);
         this.set('page','shedule-detail');
       },
-      _reload : function() {
-        this.splice('shedules',0,this.shedules.length);
-        this.$.ajax.generateRequest();
+      _load : function() {
+        this.set('pageReady',!this.loading);
       },
       ready : function() {
-
+        this.set('pageReady', false);
+        this.splice('shedules',0,this.shedules.length);
+        this.$.ajax.generateRequest();
       }
     });
   </script>
