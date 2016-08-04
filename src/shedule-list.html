@@ -3,15 +3,13 @@
 
 <!--link rel="import" href="../bower_components/iron-fit-behavior/iron-fit-behavior.html"-->
 
+<link rel="import" href="./shared-styles.html">
+
 <dom-module id="class-main">
   <template>
+    <style include="shared-styles"></style>
     <style>
-    [shedule-item] {
-      margin:2%;
-      box-shadow:0 0 0.3em rgba(0,0,0,0.2);
-      padding:2%;
-      min-height:1em;
-    }
+
     </style>
 
     <iron-ajax id="ajax" auto
@@ -21,7 +19,7 @@
       loading="{{loading}}"><!-- userId id title body --></iron-ajax>
 
     <template is="dom-repeat" items="{{shedules}}" as="item" initial-count="20">
-      <div shedule-item on-tap="_viewClass">[[item.title]]</div>
+      <div list-item on-tap="_viewClass">[[item.title]]</div>
     </template>
 
   </template>

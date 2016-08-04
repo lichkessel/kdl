@@ -26,12 +26,6 @@
         background:#03a9f4;
         color:white !important;
       }
-      paper-fab
-      {
-        position:fixed;
-        bottom:20px;
-        right:20px;
-      }
     </style>
     
     <iron-ajax id="ajax" auto 
@@ -39,7 +33,7 @@
       last-response="{{students}}"
       last-error="{{error}}"
       loading="{{loading}}"></iron-ajax>
-    <template is="dom-repeat" items="{{students}}">
+    <template id="repeater" is="dom-repeat" items="{{students}}">
       <div list-item editing$="[[item._editing]]" on-tap="_openEdit">
           <div hidden$="[[item._editing]]">[[item.name]]</div>
           <iron-collapse opened="{{item._editing}}">
@@ -51,7 +45,11 @@
           </iron-collapse>
       </div>
     </template>
-    <paper-fab icon="add" hidden$="{{loading}}" on-tap="_addNew"></paper-fab>
+    <div add-button hidden$="{{loading}}">
+      <div hidden$="{{editing}}">
+        <paper-fab  icon="add" on-tap="_addNew"  ></paper-fab>
+      </div>
+    </div>
   </template>
   <script>
     Polymer({
@@ -70,18 +68,27 @@
           type:Boolean,
           notify:true,
           observer:"_load"
+        },
+        editing : {
+          type:Boolean,
+          notify:true
         }
       },
       _addNew : function() {
         var self = this;
         this.students.forEach(function(d,i) { self.set('students.'+i+'._editing',false) })
         this.unshift('students',{ id:'', name:'', email:'', _editing:true });
+        this.$.repeater.render();
+        this.$$('[list-item][editing] paper-input:first-child').focus();
+        this.set('editing',true);
       },
       _closeEdit : function(e) {
         e.model.set('item._editing',false);
+        this.set('editing', false);
         e.stopPropagation();
       },
       _openEdit : function(e) {
+        this.set('editing', true);
         if(e.model.item._editing) return;
         var self = this;
         this.students.forEach(function(d,i) { self.set('students.'+i+'._editing',false) })
