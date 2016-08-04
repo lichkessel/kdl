@@ -12,11 +12,11 @@
       last-error="{{error}}"
       loading="{{loadingOwed}}"></iron-ajax>
 
-        <ol hidden$="{{loadingOwed}}">
-          <template is="dom-repeat" items="{{owedPayments}}">
-            <li>[[item.title]]</li>
-          </template>
-        </ol>
+    <ol hidden$="{{loadingOwed}}">
+      <template is="dom-repeat" items="{{owedPayments}}">
+        <li>[[item.title]]</li>
+      </template>
+    </ol>
 
   </template>
 
@@ -34,7 +34,6 @@
           notify : true
         }
       },
-      
       _expandChanged : function(expanded) {
         if(expanded) { this.$$('iron-ajax').generateRequest() }
       },

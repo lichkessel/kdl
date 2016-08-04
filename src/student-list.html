@@ -1,5 +1,10 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
 <link rel="import" href="../bower_components/paper-spinner/paper-spinner.html">
+<link rel="import" href="../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../bower_components/paper-item/paper-item-body.html">
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/iron-collapse/iron-collapse.html">
 
 <link rel="import" href="../bower_components/app-route/app-location.html">
 <link rel="import" href="../bower_components/app-route/app-route.html">
@@ -8,12 +13,55 @@
 
 <dom-module id="student-list">
   <template>
-    <paper-spinner active></paper-spinner>
-    <iron-ajax auto 
-      url="http://jsonplaceholder.typicode.com/posts/{{routeData.id}}" 
-      last-response="{{sheduleDetail}}"
+    <style>
+      [student-item] {
+        margin:2%;
+        box-shadow:0 0 0.3em rgba(0,0,0,0.2);
+        padding:2%;
+      }
+      paper-item-body
+      {
+        padding:0.25em;
+      }
+      iron-collapse div
+      {
+        padding:0.25em;
+      }
+      iron-collapse paper-button
+      {
+        background:#03a9f4;
+        color:white !important;
+      }
+      paper-item[editing]
+      {
+        border:1px solid gray;
+      }
+    </style>
+    
+    <iron-ajax id="ajax" auto 
+      url="http://jsonplaceholder.typicode.com/users" 
+      last-response="{{students}}"
       last-error="{{error}}"
-      loading="{{loadingDetail}}"><!-- userId id title body --></iron-ajax>
+      loading="{{loadingStudents}}"></iron-ajax>
+    <paper-item hidden$="{{!loadingStudents}}">
+      <paper-item-body><paper-spinner active$="{{loadingStudents}}"></paper-spinner></paper-item-body>
+    </paper-item>
+    <template is="dom-repeat" items="{{students}}">
+      <paper-item editing$="[[item._editing]]">
+        <paper-item-body two-line>
+          <div hidden$="[[item._editing]]">[[item.name]]</div>
+          <iron-collapse opened="{{item._editing}}">
+            <div>
+              <paper-input label="Student name" value="{{item.name}}"></paper-input>
+              <paper-input label="E-mail" value="{{item.email}}"></paper-input>
+              <paper-button raised on-click="_toggleEdit">Save</paper-button>
+            </div>
+          </iron-collapse>
+        </paper-item-body>
+        <div hidden$="[[item._editing]]"><paper-button on-click="_toggleEdit">Edit</paper-button></div>
+      </paper-item>
+      
+    </template>
   </template>
   <script>
     Polymer({
@@ -25,17 +73,17 @@
           value : []
         }
       },
+      _toggleEdit : function(e) {
+        var state = !e.model.item._editing;
+        var self = this;
+        this.students.forEach(function(d,i) { self.set('students.'+i+'._editing',false) })
+        e.model.set('item._editing',state);
+      },
+      _reload : function() {
+        this.splice('students',0,this.students.length);
+        this.$.ajax.generateRequest();
+      },
       ready: function() {
-
-
-        //console.log(this);
-        //this.$$('iron-list').fire('iron-resize');
-        //var self = this;
-        //setTimeout(function() {self.push('students',{first:'1',last:'2'})}, 1000)
-        /*this.students = [
-            {first: 'Bob', last: 'Smith'},
-            {first: 'Sally', last: 'Johnson'}
-        ];*/
       }
     });
   </script>

@@ -11,10 +11,8 @@
   <template>
     <style>
     </style>
-    <app-location use-hash-as-path route="{{route}}"></app-location>
-    <app-route route="{{route}}" pattern="/shedule-detail/:id" data="{{routeData}}"></app-route>
     <iron-ajax auto 
-      url="http://jsonplaceholder.typicode.com/posts/{{routeData.id}}" 
+      url="http://jsonplaceholder.typicode.com/posts/[[classId]]" 
       last-response="{{sheduleDetail}}"
       last-error="{{error}}"
       loading="{{loadingDetail}}"><!-- userId id title body --></iron-ajax>
@@ -22,7 +20,7 @@
     <div hidden$="{{loadingDetail}}">{{sheduleDetail.body}}</div>
     <!--/posts/1/comments-->
     <iron-ajax auto 
-      url="http://jsonplaceholder.typicode.com/posts/{{routeData.id}}/comments" 
+      url="http://jsonplaceholder.typicode.com/posts/[[classId]]/comments" 
       last-response="{{classStudents}}"
       last-error="{{error}}"
       loading="{{loadingStudents}}"><!-- userId id title body --></iron-ajax>
@@ -45,7 +43,10 @@
     Polymer({
       is : "class-detail",
       properties : {
-
+        classId : {
+          type:String,
+          notify:true
+        }
       },
       _toggleOwed : function(e) {
         e.model.set('item.expanded', !e.model.item.expanded);
