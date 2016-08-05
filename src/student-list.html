@@ -47,7 +47,7 @@
       last-error="{{error}}"
       loading="{{loading}}"></iron-ajax>
     <paper-toast id="toast" text="This toast auto-closes after 3 seconds"></paper-toast>
-
+    <a id="topfocus"></a>
     <template id="repeater" is="dom-repeat" items="{{students}}">
       <div class="list-item" editing$="[[item._editing]]" on-tap="_openEdit">
         <div class="card-toggle">
@@ -124,7 +124,7 @@
       _onCardResponse : function(e) {
         var item = e.detail.parseResponse();
         e.model.set('item', item);
-        console.log(item);
+        //console.log(item);
         //e.model.set('item._sending',false);
         //e.model.set('item._editing',false);
         //e.model.set('item._new',false);
@@ -161,6 +161,7 @@
           _new : true
         });
         this.$.repeater.render();
+        this.$.topfocus.focus();
         this.$$('.list-item[editing] paper-input:first-child').focus();
         this.set('editing',true);
       },
