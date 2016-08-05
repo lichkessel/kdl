@@ -1,4 +1,5 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/paper-spinner/paper-spinner.html">
 <link rel="import" href="../bower_components/paper-card/paper-card.html">
 <link rel="import" href="../bower_components/paper-input/paper-input.html">
 <link rel="import" href="../bower_components/paper-button/paper-button.html">
@@ -9,11 +10,11 @@
 <link rel="import" href="../bower_components/app-route/app-location.html">
 <link rel="import" href="../bower_components/app-route/app-route.html">
 <link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="../bower_components/iron-form/iron-form.html">
 
 <link rel="import" href="./shared-styles.html">
 
 <dom-module id="student-list">
-  <link rel="stylesheet" href="./style.css">
   <template>
     <style include="shared-styles"></style>
     <style>
@@ -26,25 +27,49 @@
         background:#03a9f4;
         color:white !important;
       }
+      [card-spinner]
+      {
+        display:inline-block;
+        vertical-align:middle;
+      }
+      [card-spinner][hidden]
+      {
+        display:none;
+      }
     </style>
     
-    <iron-ajax id="ajax" auto 
+    <iron-ajax id="ajax" 
       url="http://jsonplaceholder.typicode.com/users" 
       last-response="{{students}}"
       last-error="{{error}}"
       loading="{{loading}}"></iron-ajax>
+    
     <template id="repeater" is="dom-repeat" items="{{students}}">
       <div list-item editing$="[[item._editing]]" on-tap="_openEdit">
           <div hidden$="[[item._editing]]">[[item.name]]</div>
           <iron-collapse opened="{{item._editing}}">
             <div>
-              <paper-input label="Student name" value="{{item.name}}"></paper-input>
-              <paper-input label="E-mail" value="{{item.email}}"></paper-input>
-              <div><paper-button raised on-tap="_closeEdit">Save</paper-button></div>
+                <form is="iron-form" id="card" method="post"
+                  action="https://jsonplaceholder.typicode.com/posts/" 
+                  on-iron-form-presubmit="_onCardPresubmit"
+                  on-iron-form-submit="_onCardSubmit"
+                  on-iron-form-response="_onCardResponse"
+                  on-iron-form-error="_onCardError"
+                  >
+                  <paper-input name="name" label="Student name" value="{{item.name}}"></paper-input>
+                  <paper-input name="email" label="E-mail" value="{{item.email}}"></paper-input>
+                  <paper-button raised on-tap="_submitCard">
+                    <div hidden$="{{item._sending}}">Save</div>
+                    <div hidden$="{{!item._sending}}">Saving</div>
+                  </paper-button>
+                  <div card-spinner hidden$="{{!item._sending}}"><paper-spinner active ></paper-spinner></div>
+                  <!--div hidden$="{{!item._error}}">[[item._error]]</div-->
+                </form>
             </div>
           </iron-collapse>
       </div>
     </template>
+    
     <div add-button hidden$="{{loading}}">
       <div hidden$="{{editing}}">
         <paper-fab  icon="add" on-tap="_addNew"  ></paper-fab>
@@ -74,6 +99,24 @@
           notify:true
         }
       },
+      _onCardPresubmit : function(e) {
+        //var form = Polymer.dom(e).localTarget;
+        //form.request.method = 'put';
+        //form.request.params = {};
+      },
+      _onCardSubmit : function(e) {
+        //console.log(Polymer.dom(e).localTarget);
+        e.model.set('item._sending',true);
+      },
+      _onCardResponse : function(e) {
+        e.model.set('item._sending',false);
+        e.model.set('item._editing',false);
+        this.set('editing', false);
+      },
+      _onCardError : function(e) {
+        e.model.set('item._sending',false);
+        e.model.set('item._error', 'Sorry! Network problems. Try again later.');
+      },
       _addNew : function() {
         var self = this;
         this.students.forEach(function(d,i) { self.set('students.'+i+'._editing',false) })
@@ -81,6 +124,11 @@
         this.$.repeater.render();
         this.$$('[list-item][editing] paper-input:first-child').focus();
         this.set('editing',true);
+      },
+      _submitCard : function(e) {
+        var form = e.currentTarget.parentNode;
+        form.submit();
+        e.stopPropagation();
       },
       _closeEdit : function(e) {
         e.model.set('item._editing',false);
