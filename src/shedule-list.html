@@ -19,7 +19,7 @@
       loading="{{loading}}"><!-- userId id title body --></iron-ajax>
 
     <template is="dom-repeat" items="{{shedules}}" as="item" initial-count="20">
-      <div list-item on-tap="_viewClass">[[item.title]]</div>
+      <div class="list-item" on-tap="_viewClass">[[item.title]]</div>
     </template>
 
   </template>
