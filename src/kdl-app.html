@@ -14,23 +14,27 @@
 
 <link rel="import" href="../bower_components/iron-pages/iron-pages.html">
 <link rel="import" href="../bower_components/iron-selector/iron-selector.html">
+<link rel="import" href="../bower_components/iron-icons/iron-icons.html">
 
+
+<link rel="import" href="../bower_components/paper-listbox/paper-listbox.html">
+<link rel="import" href="../bower_components/paper-item/paper-item.html">
 <link rel="import" href="../bower_components/paper-tabs/paper-tabs.html">
 <link rel="import" href="../bower_components/paper-spinner/paper-spinner.html">
 
-<link rel="import" href="./kdl-icons.html">
+<!--link rel="import" href="./kdl-icons.html"-->
 
 <dom-module id="kdl-app">
   <template>
     <style>
       :host {
         display: block;
-        --app-primary-color: #7030a0;
+        --app-primary-color: gray;
         --app-secondary-color: white;
       }
       app-header-layout
       {
-        z-index:3;
+        /*z-index:3;*/
       }
       app-header {
         position:fixed;
@@ -51,30 +55,60 @@
         position:fixed;
       }
       [spinner][hidden] {display:none}
+
+      [main-title] {
+        font-weight: lighter;
+        margin-left: 30px;
+      }
+
+      [condensed-title] {
+        font-weight: lighter;
+        margin-left: 30px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      [condensed-title] i {
+        font-weight: 100;
+        font-style: normal;
+      }
+      app-toolbar.tall {
+        height: 148px;
+      }
+      *[hideme=""]
+      {display:none !important;}
     </style>
 
-    <app-header-layout>
-      <app-header condenses reveals fixed effects="waterfall">
-        <app-toolbar>
-          <div>Welcome!</div>
-        </app-toolbar>
-        <paper-tabs attr-for-selected="name" selected="{{page}}" sticky on-iron-activate="_reload">
-            <paper-tab name="shedule-list">Existing classes</paper-tab>
-            <paper-tab name="student-list">Students</paper-tab>
-            <paper-tab name="class-list">Classes</paper-tab>
-            <paper-tab name="price-list">Pricelists</paper-tab>
-        </paper-tabs>
-      </app-header>
-    </app-header-layout>
-    <iron-pages attr-for-selected="id" selected="{{page}}">
-      <class-main id="shedule-list" class-id="{{classId}}" page="{{page}}" page-ready="{{pageReady}}"></class-main>
-      <class-detail id="shedule-detail" class-id="{{classId}}" page-ready="{{pageReady}}"></class-detail>
-      <student-list id="student-list" page-ready="{{pageReady}}" xxx="123"></student-list>
-      <price-list id="price-list" page-ready="{{pageReady}}"></price-list>
-      <class-list id="class-list" page-ready="{{pageReady}}"></class-list>
-    </iron-pages>
-    <div spinner hidden="{{pageReady}}"><paper-spinner active></paper-spinner></div>
-    
+    <app-drawer-layout>
+      <app-drawer>
+        <paper-listbox attr-for-selected="name" selected="{{page}}" on-iron-select="_selected" on-iron-activate="_reload">
+          <paper-item name="shedule-list">Existing classes</paper-item>
+          <paper-item name="student-list">Students</paper-item>
+          <paper-item name="class-list">Classes</paper-item>
+          <paper-item name="price-list">Pricelists</paper-item>
+        </paper-listbox>
+      </app-drawer>
+      <app-header-layout>
+        <app-header condenses reveals fixed effects="waterfall resize-title blend-background parallax-background">
+          <app-toolbar>
+            <paper-icon-button icon="menu" drawer-toggle></paper-icon-button>
+            <paper-icon-button hideme$="{{app.classKey}}" icon="arrow-back" on-tap="_back"></paper-icon-button>
+            <h4 condensed-title>[[app.title]]</h4>
+          </app-toolbar>
+          <app-toolbar class="tall">
+            <h1 main-title>[[app.title]]</h1>
+          </app-toolbar>        
+        </app-header>
+        <iron-pages attr-for-selected="id" selected="{{page}}">
+          <class-main id="shedule-list" app="{{app}}" page="{{page}}"></class-main>
+          <class-detail id="shedule-detail" app="{{app}}"></class-detail>
+          <student-list id="student-list" app="{{app}}"></student-list>
+          <price-list id="price-list" app="{{app}}"></price-list>
+          <class-list id="class-list" app="{{app}}"></class-list>
+        </iron-pages>
+        <div spinner hidden="{{app.ready}}"><paper-spinner active></paper-spinner></div>
+      </app-header-layout>
+    </app-drawer-layout>
   </template>
 
   <script>
@@ -87,6 +121,16 @@
           type : String,
           notify : true,
           observer : '_pageChanged'
+        },
+        app : {
+          type : Object,
+          notify : true,
+          value : {
+            lastpage : '',
+            classKey : '',
+            title : 'Xxxx',
+            ready : false
+          }  
         }
       },
       //observers: [
@@ -100,10 +144,17 @@
           this.$[this.page].ready();
         }
       },
+      _back : function() {
+        this.set( 'page', this.get('lastpage') );
+      },
+      _selected : function() {
+        this.set('app.classKey','');
+      },
       //_routePageChanged: function(page) {
       //  this.page = page || 'shedule-list';
       //},
-      _pageChanged: function(page) {
+      _pageChanged: function(page, old) {
+        this.set('lastpage', old);
         // load page import on demand.
         this.importHref( this.resolveUrl(page + '.html'), null, null, true);
         //this.set('route.path','/'+page);

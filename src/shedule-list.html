@@ -1,6 +1,9 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
 <link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
 
+<link rel="import" href="../bower_components/paper-card/paper-card.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+
 <!--link rel="import" href="../bower_components/iron-fit-behavior/iron-fit-behavior.html"-->
 
 <link rel="import" href="./shared-styles.html">
@@ -9,7 +12,12 @@
   <template>
     <style include="shared-styles"></style>
     <style>
-
+      :host > paper-card 
+      {
+        margin:10px;
+        margin-bottom:15px;
+        margin-top:15px;
+      }
     </style>
 
     <iron-ajax id="ajax"
@@ -19,7 +27,12 @@
       loading="{{loading}}"><!-- userId id title body --></iron-ajax>
 
     <template is="dom-repeat" items="{{shedules}}" as="item" initial-count="20">
-      <div class="list-item" on-tap="_viewClass">[[item.title]]</div>
+      <paper-card heading="[[item.title]]">
+        <div class="card-content">[[item.body]]</div>
+        <div class="card-actions">
+          <paper-button on-tap="_viewClass">View</paper-button>
+        </div>
+      </paper-card>
     </template>
 
   </template>
@@ -31,9 +44,9 @@
           type:String,
           notify:true
         },
-        classId : {
-          type : String,
-          notify : true
+        app : {
+          type : Object,
+          notify : true 
         },
         shedules : {
           type: Array,
@@ -51,15 +64,16 @@
         }
       },
       _viewClass : function(e) {
-        this.set('classId',e.model.item.id);
+        this.set('app.classKey',e.model.item.id);
         this.set('page','shedule-detail');
       },
       _load : function() {
-        this.set('pageReady',!this.loading);
+        this.set('app.ready',!this.loading);
       },
       ready : function() {
-        this.set('pageReady', false);
-        this.splice('shedules',0,this.shedules.length);
+        this.set('app.ready', false);
+        this.set('shedules',[]);
+        //this.splice('shedules',0,this.shedules.length);
         this.$.ajax.generateRequest();
       }
     });
