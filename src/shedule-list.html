@@ -12,12 +12,7 @@
   <template>
     <style include="shared-styles"></style>
     <style>
-      :host > paper-card 
-      {
-        margin:10px;
-        margin-bottom:15px;
-        margin-top:15px;
-      }
+
     </style>
 
     <iron-ajax id="ajax"
@@ -27,7 +22,7 @@
       loading="{{loading}}"><!-- userId id title body --></iron-ajax>
 
     <template is="dom-repeat" items="{{shedules}}" as="item" initial-count="20">
-      <paper-card heading="[[item.title]]">
+      <paper-card heading="[[item.title]]" class="list-card">
         <div class="card-content">[[item.body]]</div>
         <div class="card-actions">
           <paper-button on-tap="_viewClass">View</paper-button>
@@ -53,18 +48,16 @@
           notify:true,
           value : []
         },
-        loading : {
-          type: Boolean,
-          notify: true,
-          observer: '_load'
-        },
         pageReady : {
           type: Boolean,
           notify:true
         }
       },
+      observers : [
+        '_load(loading)'
+      ],
       _viewClass : function(e) {
-        this.set('app.classKey',e.model.item.id);
+        this.set('app.sheduleItem', e.model.item);
         this.set('page','shedule-detail');
       },
       _load : function() {

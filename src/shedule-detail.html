@@ -2,32 +2,60 @@
 
 <link rel="import" href="../bower_components/app-route/app-location.html">
 <link rel="import" href="../bower_components/app-route/app-route.html">
-<link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
 
+<link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="../bower_components/iron-collapse/iron-collapse.html">
+
+<link rel="import" href="../bower_components/paper-material/paper-material.html">
 <link rel="import" href="../bower_components/paper-spinner/paper-spinner.html">
+<link rel="import" href="../bower_components/paper-card/paper-card.html">
+
 
 <link rel="import" href="./owed-list.html">
 
 <dom-module id="class-detail">
   <template>
-    <style>
-    </style>
-    <iron-ajax auto 
+    <style include="shared-styles"></style>
+    <!--iron-ajax
       url="http://jsonplaceholder.typicode.com/posts/[[app.classKey]]" 
       last-response="{{sheduleDetail}}"
       last-error="{{error}}"
-      loading="{{loadingDetail}}"><!-- userId id title body --></iron-ajax>
+      loading="{{loadingDetail}}"></iron-ajax-->
 
-    <div hidden$="{{loadingDetail}}">{{sheduleDetail.body}}</div>
+    <!--div hidden$="{{loadingDetail}}">{{sheduleDetail.body}}</div-->
 
-    <iron-ajax auto 
-      url="http://jsonplaceholder.typicode.com/posts/[[app.classKey]]/comments" 
+    <iron-ajax id="ajax"
+      url="http://jsonplaceholder.typicode.com/posts/[[app.sheduleItem.id]]/comments" 
       last-response="{{classStudents}}"
       last-error="{{error}}"
-      loading="{{loadingStudents}}"><!-- userId id title body --></iron-ajax>
-    <div>
-      <paper-spinner active$="{{loadingStudents}}"></paper-spinner>
-      <ol hidden$="{{loadingStudents}}">
+      loading="{{loading}}"><!-- userId id title body --></iron-ajax>
+
+    <paper-material class="card-holder">
+      <template is="dom-repeat" items="{{classStudents}}" >
+        <div class="list-item">
+
+          <div class="card">
+            <div class="card-text" hidden$="[[item._toggled]]">[[item.name]]</div>
+            <paper-spinner class="toggle-spinner" active or-hidden-1$="[[!item._expanded]]" or-hidden-2$="[[item._ready]]"></paper-spinner>
+            <div class="card-toggle">
+              <paper-icon-button class="expand-card" icon$="[[iconToggle(item._expanded)]]" on-tap="_toggleStudent"></paper-icon-button>
+            </div>
+          </div>
+
+          <iron-collapse class="card-form" opened="[[item._ready]]">
+            <div>
+              <owed-list student="{{item}}"></owed-list>
+            </div>
+          </iron-collapse>
+
+        </div>
+      </template>
+
+    </paper-material>
+
+     
+
+      <!--ol hidden$="{{loadingStudents}}">
         <template is="dom-repeat" items="{{classStudents}}" >
           <li>
             <div>[[item.name]]</div>
@@ -37,20 +65,51 @@
             </div>
            </li>
         </template>
-      </ol>
-    </div>
+      </ol-->
+
   </template>
   <script>
     Polymer({
-      is : "class-detail",
-      properties : {
+      is : "class-detail"
+      ,properties : {
         app : {
           type : Object,
           notify : true
         }
-      },
-      _toggleOwed : function(e) {
+        ,classStudents : {
+          type: Array,
+          notify: true
+        }
+        //sheduleItem : {
+        //  type : Object,
+        //  notify : true,
+          //observer : '_sheduleDetailLoaded'
+        //}
+      }
+      //_sheduleDetailLoaded : function(e) {
+      //  this.set('app.title', this.sheduleDetail.title);
+      //},
+      ,observers : [
+        '_load(loading)'
+      ]
+      ,iconToggle : function(exp) {
+        return exp ? 'expand-less' : 'expand-more';
+      }
+      ,_toggleStudent : function(e) {
+        e.model.set('item._expanded', !e.model.item._expanded);
+        e.model.set('item._ready', false);
+      }
+      ,_toggleOwed : function(e) {
         e.model.set('item.expanded', !e.model.item.expanded);
+      }
+      ,_load : function() {
+        this.set('app.ready',!this.loading);
+      }
+      ,ready : function() {
+        this.set('app.ready', false);
+        this.set('classStudents',[]);
+        this.$.ajax.generateRequest();
+        //this.$.subajax.generateRequest();
       }
     });
   </script>

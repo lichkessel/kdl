@@ -1,18 +1,21 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
+
+<link rel="import" href="../bower_components/app-route/app-location.html">
+<link rel="import" href="../bower_components/app-route/app-route.html">
+
 <link rel="import" href="../bower_components/paper-spinner/paper-spinner.html">
 <link rel="import" href="../bower_components/paper-card/paper-card.html">
 <link rel="import" href="../bower_components/paper-input/paper-input.html">
 <link rel="import" href="../bower_components/paper-button/paper-button.html">
 <link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../bower_components/paper-fab/paper-fab.html">
-<link rel="import" href="../bower_components/iron-icons/iron-icons.html">
-<link rel="import" href="../bower_components/iron-collapse/iron-collapse.html">
 <link rel="import" href="../bower_components/paper-toast/paper-toast.html">
+<link rel="import" href="../bower_components/paper-material/paper-material.html">
 
-<link rel="import" href="../bower_components/app-route/app-location.html">
-<link rel="import" href="../bower_components/app-route/app-route.html">
 <link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
 <link rel="import" href="../bower_components/iron-form/iron-form.html">
+<link rel="import" href="../bower_components/iron-collapse/iron-collapse.html">
+<link rel="import" href="../bower_components/iron-icons/iron-icons.html">
 
 <link rel="import" href="./shared-styles.html">
 
@@ -20,15 +23,6 @@
   <template>
     <style include="shared-styles"></style>
     <style>
-      iron-collapse div
-      {
-        padding:0.25em;
-      }
-      paper-button.save
-      {
-        background:#03a9f4;
-        color:white !important;
-      }
       [card-spinner]
       {
         display:inline-block;
@@ -46,20 +40,23 @@
       last-response="{{students}}"
       last-error="{{error}}"
       loading="{{loading}}"></iron-ajax>
-    <paper-toast id="toast" text="This toast auto-closes after 3 seconds"></paper-toast>
+    <paper-toast id="toast" horizontal-align="right"></paper-toast>
     <a id="topfocus"></a>
+    <paper-material class="card-holder">
+      <template id="repeater" is="dom-repeat" items="{{students}}">
+        <div class="list-item" editing$="[[item._editing]]">
 
-    <template id="repeater" is="dom-repeat" items="{{students}}">
-      <div class="list-item" editing$="[[item._editing]]" on-tap="_openEdit">
-        <div class="card-toggle">
-          <span hidden$="[[item._editing]]"><paper-icon-button class="expand-card" icon="expand-more" on-tap="_openEdit"></paper-icon-button></span>
-          <span hidden$="[[!item._editing]]"><paper-icon-button class="expand-card" icon="expand-less" on-tap="_cancelCard"></paper-icon-button></span>
-        </div>
-        <div class="card">
-          <div class="card-text" hidden$="[[item._editing]]">[[item.name]]</div>
+          <div class="card">
+            <div class="card-text" hidden$="[[item._editing]]">[[item.name]]</div>
+            <div class="card-toggle">
+              <span hidden$="[[item._editing]]"><paper-icon-button class="expand-card" icon="expand-more" on-tap="_openEdit"></paper-icon-button></span>
+              <span hidden$="[[!item._editing]]"><paper-icon-button class="expand-card" icon="expand-less" on-tap="_cancelCard"></paper-icon-button></span>
+            </div>
+          </div>
+
           <iron-collapse class="card-form" opened="{{item._editing}}">
             <div>
-              <form is="iron-form" id="card" method="post"
+              <form is="iron-form" method="post"
                 action="https://jsonplaceholder.typicode.com/posts/"
                 content-type="application/json"
                 on-iron-form-presubmit="_onCardPresubmit"
@@ -67,22 +64,27 @@
                 on-iron-form-response="_onCardResponse"
                 on-iron-form-error="_onCardError"
                 >
-                <paper-input name="name" label="Student name" value="{{item.name}}" required error-message="Required" auto-validate$="{{!item._new}}"></paper-input>
-                <paper-input name="email" label="E-mail" value="{{item.email}}" required error-message="Required" auto-validate$="{{!item._new}}"></paper-input>
-                <paper-input name="phone" label="Phone" value="{{item.phone}}"></paper-input>
-                <paper-button class="save" raised on-tap="_submitCard">
+                <div class="form-inputs">
+                  <paper-input name="name" label="Student name" value="{{item.name}}" required error-message="Required" auto-validate$="{{!item._new}}" dir="rtl"></paper-input>
+                  <paper-input name="email" label="E-mail" value="{{item.email}}" required error-message="Required" auto-validate$="{{!item._new}}" dir="rtl"></paper-input>
+                  <paper-input name="phone" label="Phone" value="{{item.phone}}" dir="rtl"></paper-input>
+                  <!--div hidden$="{{!item._error}}">[[item._error]]</div-->
+                </div>
+              </form>
+              <div class="form-controls">
+                <div card-spinner hidden$="{{!item._sending}}"><paper-spinner active ></paper-spinner></div>
+                <paper-button class="save" on-tap="_submitCard">
                   <div hidden$="{{item._sending}}">Save</div>
                   <div hidden$="{{!item._sending}}">Saving</div>
                 </paper-button>
                 <span hidden$="{{!item._new}}"><paper-button class="cancel" on-tap="_cancelCard">Cancel</paper-button></span>
-                <div card-spinner hidden$="{{!item._sending}}"><paper-spinner active ></paper-spinner></div>
-                <!--div hidden$="{{!item._error}}">[[item._error]]</div-->
-              </form>
+              </div>
             </div>
           </iron-collapse>
+
         </div>
-      </div>
-    </template>
+      </template>
+    </paper-material>
     <div class="add-button" hidden$="{{loading}}">
       <div hidden$="{{editing}}">
         <paper-fab icon="add" on-tap="_addNew"></paper-fab>
@@ -102,16 +104,14 @@
           notify: true,
           value : []
         },
-        loading : {
-          type:Boolean,
-          notify:true,
-          observer:"_load"
-        },
         editing : {
           type:Boolean,
           notify:true
         }
       },
+      observers : [
+        '_load(loading)'
+      ],
       _onCardPresubmit : function(e) {
         //var form = Polymer.dom(e).localTarget;
         //form.request.contentType = "application/json";
@@ -133,12 +133,11 @@
       },
       _onCardError : function(e) {
         e.model.set('item._sending',false);
-        this.$.toast.text = 'Sorry! Network problems. Try again later.';
-        this.$.toast.open();
+        this.$.toast.show({ text: 'Sorry! Network problems. Try again later.', duration: 3000});
         e.model.set('item._error', true);
       },
       _submitCard : function(e) {
-        var form = e.currentTarget.parentNode;
+        var form = e.currentTarget.parentNode.parentNode.querySelector('form');
         form.submit();
         e.stopPropagation();
       },

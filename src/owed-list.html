@@ -4,40 +4,83 @@
 <link rel="import" href="../bower_components/app-route/app-route.html">
 <link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
 
+
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/paper-toast/paper-toast.html">
+
 <dom-module id="owed-list">
   <template>
+    <style include="shared-styles"></style>
     <iron-ajax 
-      url="http://jsonplaceholder.typicode.com/posts?userId={{studentId}}" 
+      url="http://jsonplaceholder.typicode.com/posts?userId={{student.id}}" 
       last-response="{{owedPayments}}"
-      last-error="{{error}}"
-      loading="{{loadingOwed}}"></iron-ajax>
-
-    <ol hidden$="{{loadingOwed}}">
-      <template is="dom-repeat" items="{{owedPayments}}">
-        <li>[[item.title]]</li>
-      </template>
-    </ol>
+      last-error="{{error}}"></iron-ajax>
+    <paper-toast id="toast" text="xxx" horizontal-align="right"></paper-toast>
+    <table class="list-table">
+      <thead><tr><th>Month<th>Owed payment</tr></thead>
+      <tbody>
+        <template id="repeater" is="dom-repeat" items="{{owedPayments}}" on-dom-change="_repeatChange">
+          <tr><td>[[item.title]]<td>1000<td><paper-button on-tap="_copyToClipboard">Copy</paper-button></tr>
+        </template>
+      </tbody>
+    </table>
+    
 
   </template>
 
   <script>
     Polymer({
-      is : "owed-list",
-      properties : {
-        expanded : {
-          type: Boolean,
-          notify:true,
-          observer : '_expandChanged'
-        },
-        studentId : {
-          type: String,
-          notify : true
+      is : "owed-list"
+      ,properties : {
+        student : {
+          type : Object
+          ,notify : true
         }
-      },
-      _expandChanged : function(expanded) {
-        if(expanded) { this.$$('iron-ajax').generateRequest() }
-      },
-      ready : function() {
+        ,sent : {
+          type: Boolean
+          ,notify:true
+          ,value: false
+        }
+      }
+      ,observers : ['_sendRequest(student._expanded)']
+      ,_repeatChange : function() {
+        this.set('student._ready', this.sent);
+      }
+      ,_copyToClipboard : function(e) {
+        var textArea = document.createElement("textarea");
+        textArea.style.position = 'fixed';
+        textArea.style.top = 0;
+        textArea.style.left = 0;
+        textArea.style.width = '2em';
+        textArea.style.height = '2em';
+        textArea.style.padding = 0;
+        textArea.style.border = 'none';
+        textArea.style.outline = 'none';
+        textArea.style.boxShadow = 'none';
+        textArea.style.background = 'transparent';
+
+        textArea.value = JSON.stringify(e.model.item);
+
+        document.body.appendChild(textArea);
+
+        textArea.select();
+        var successful = false;
+        try {
+          successful = document.execCommand('copy');
+        } catch (err) {
+          console.log('Oops, unable to copy');
+        }
+        document.body.removeChild(textArea);
+        this.$.toast.show({text:successful ? 'Copied!' : "Wasn't copied...", duration: 2000});
+      }
+      ,_sendRequest : function(exp) {
+        if(exp) {
+          this.set('sent', true);
+          this.$$('iron-ajax').generateRequest()
+        }
+      }
+      ,ready : function() {
+
       }
     });
   </script>

@@ -29,12 +29,10 @@
     <style>
       :host {
         display: block;
-        --app-primary-color: gray;
+        --app-primary-color: #7E57C2;
         --app-secondary-color: white;
-      }
-      app-header-layout
-      {
-        /*z-index:3;*/
+        --app-primary-border-color: #ccc;
+        --app-secondary-border-color: #eee;
       }
       app-header {
         position:fixed;
@@ -75,28 +73,29 @@
       app-toolbar.tall {
         height: 148px;
       }
-      *[hideme=""]
+      *[hideme]
       {display:none !important;}
     </style>
 
-    <app-drawer-layout>
-      <app-drawer>
+    <app-drawer-layout  dir="rtl">
+      <app-drawer dir="rtl" align="start">
         <paper-listbox attr-for-selected="name" selected="{{page}}" on-iron-select="_selected" on-iron-activate="_reload">
-          <paper-item name="shedule-list">Existing classes</paper-item>
-          <paper-item name="student-list">Students</paper-item>
-          <paper-item name="class-list">Classes</paper-item>
-          <paper-item name="price-list">Pricelists</paper-item>
+          <paper-item name="shedule-list">[[groups.shedule-list]]</paper-item>
+          <paper-item name="student-list">[[groups.student-list]]</paper-item>
+          <paper-item name="class-list">[[groups.class-list]]</paper-item>
+          <paper-item name="price-list">[[groups.price-list]]</paper-item>
         </paper-listbox>
       </app-drawer>
       <app-header-layout>
-        <app-header condenses reveals fixed effects="waterfall resize-title blend-background parallax-background">
+        <app-header condenses reveals fixed 
+          effects="waterfall resize-snapped-title blend-background parallax-background">
           <app-toolbar>
-            <paper-icon-button icon="menu" drawer-toggle></paper-icon-button>
-            <paper-icon-button hideme$="{{app.classKey}}" icon="arrow-back" on-tap="_back"></paper-icon-button>
-            <h4 condensed-title>[[app.title]]</h4>
+            <paper-icon-button hideme$="[[backButton(app.sheduleItem)]]" icon="menu" drawer-toggle></paper-icon-button>
+            <paper-icon-button hideme$="[[!backButton(app.sheduleItem)]]" icon="arrow-forward" on-tap="_back"></paper-icon-button>
+            <h4 condensed-title>[[appTitle(page)]]</h4>
           </app-toolbar>
           <app-toolbar class="tall">
-            <h1 main-title>[[app.title]]</h1>
+            <h1 main-title>[[appTitle(page)]]</h1>
           </app-toolbar>        
         </app-header>
         <iron-pages attr-for-selected="id" selected="{{page}}">
@@ -121,45 +120,63 @@
           type : String,
           notify : true,
           observer : '_pageChanged'
-        },
-        app : {
+        }
+        ,app : {
           type : Object,
           notify : true,
           value : {
             lastpage : '',
-            classKey : '',
-            title : 'Xxxx',
+            sheduleItem : {},
             ready : false
           }  
         }
-      },
+        ,groups : {
+          type : Object,
+          value : {
+            "shedule-list" : "Existing classes"
+            ,"student-list" : "Students"
+            ,"class-list" : "Classes"
+            ,"price-list" : "Pricelists"
+          }
+        }
+      }
       //observers: [
       //  '_routePageChanged(routeData.page)'
       //],
-      _viewClass : function() {
+      ,backButton : function(o) {
+        return o.id!==undefined;
+      }
+      ,appTitle : function(page) {
+        if(page === 'shedule-detail') { 
+          return this.app.sheduleItem.title
+        } else {
+          return this.groups[page];
+        }
+      }
+      ,_viewClass : function() {
         alert(1);
-      },
-      _reload: function(e) {
+      }
+      ,_reload: function(e) {
         if(e.detail.selected === this.page) {
           this.$[this.page].ready();
         }
-      },
-      _back : function() {
+      }
+      ,_back : function() {
         this.set( 'page', this.get('lastpage') );
-      },
-      _selected : function() {
-        this.set('app.classKey','');
-      },
+      }
+      ,_selected : function() {
+        this.set('app.sheduleItem',{});
+      }
       //_routePageChanged: function(page) {
       //  this.page = page || 'shedule-list';
       //},
-      _pageChanged: function(page, old) {
+      ,_pageChanged: function(page, old) {
         this.set('lastpage', old);
         // load page import on demand.
         this.importHref( this.resolveUrl(page + '.html'), null, null, true);
         //this.set('route.path','/'+page);
-      },
-      ready : function() {
+      }
+      ,ready : function() {
         this.set('page',"shedule-list");
         //var self= this;
         //setTimeout(function() { self.$$('paper-tabs').selectIndex('0') },1000);
