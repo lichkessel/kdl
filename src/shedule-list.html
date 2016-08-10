@@ -19,7 +19,7 @@
       url="http://jsonplaceholder.typicode.com/posts" 
       last-response="{{shedules}}" 
       last-error="{{error}}" 
-      loading="{{loading}}"><!-- userId id title body --></iron-ajax>
+      on-response="_onResponse"><!-- userId id title body --></iron-ajax>
 
     <template is="dom-repeat" items="{{shedules}}" as="item" initial-count="20">
       <paper-card heading="[[item.title]]" class="list-card">
@@ -35,39 +35,27 @@
     Polymer({
       is:'class-main',
       properties : {
-        page : {
-          type:String,
-          notify:true
-        },
-        app : {
-          type : Object,
-          notify : true 
-        },
         shedules : {
           type: Array,
           notify:true,
           value : []
-        },
-        pageReady : {
-          type: Boolean,
-          notify:true
         }
-      },
-      observers : [
-        '_load(loading)'
-      ],
-      _viewClass : function(e) {
-        this.set('app.sheduleItem', e.model.item);
-        this.set('page','shedule-detail');
-      },
-      _load : function() {
-        this.set('app.ready',!this.loading);
-      },
-      ready : function() {
-        this.set('app.ready', false);
+      }
+      ,listeners : {
+        'do-load-page' : '_loadPage'
+      }
+      ,_loadPage : function(e) {
         this.set('shedules',[]);
-        //this.splice('shedules',0,this.shedules.length);
         this.$.ajax.generateRequest();
+      }
+      ,_onResponse : function(e) {
+        this.fire('page-ready');
+      }
+      ,_viewClass : function(e) {
+        this.fire('load-page', { id: 'shedule-detail', item: e.model.item, title: e.model.item.title, backButton: true })
+      }
+      ,ready : function() {
+        this.fire('component-loaded','shedule-list');
       }
     });
   </script>

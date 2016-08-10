@@ -34,12 +34,11 @@
       }
 
     </style>
-    
     <iron-ajax id="ajax" 
       url="http://jsonplaceholder.typicode.com/users" 
       last-response="{{students}}"
       last-error="{{error}}"
-      loading="{{loading}}"></iron-ajax>
+      on-response="_onResponse"></iron-ajax>
     <paper-toast id="toast" horizontal-align="right"></paper-toast>
     <a id="topfocus"></a>
     <paper-material class="card-holder">
@@ -90,6 +89,7 @@
         <paper-fab icon="add" on-tap="_addNew"></paper-fab>
       </div>
     </div>
+
   </template>
   <script>
     Polymer({
@@ -108,21 +108,31 @@
           type:Boolean,
           notify:true
         }
-      },
-      observers : [
-        '_load(loading)'
-      ],
-      _onCardPresubmit : function(e) {
+      }
+      ,listeners : {
+        'do-load-page' : '_pageLoad'
+      }
+      ,ready : function() {
+        this.fire('component-loaded','student-list');
+      }
+      ,_pageLoad : function(e) {
+        this.set('students',[]);
+        this.$.ajax.generateRequest();
+      }
+      ,_onResponse : function(e) {
+        this.fire('page-ready');
+      }
+      ,_onCardPresubmit : function(e) {
         //var form = Polymer.dom(e).localTarget;
         //form.request.contentType = "application/json";
         //form.request.method = 'put';
         //form.request.params = {};
-      },
-      _onCardSubmit : function(e) {
+      }
+      ,_onCardSubmit : function(e) {
         //console.log(Polymer.dom(e).localTarget);
         e.model.set('item._sending',true);
-      },
-      _onCardResponse : function(e) {
+      }
+      ,_onCardResponse : function(e) {
         var item = e.detail.parseResponse();
         e.model.set('item', item);
         //console.log(item);
@@ -176,16 +186,7 @@
         var self = this;
         this.students.forEach(function(d,i) { self.set('students.'+i+'._editing',false) })
         e.model.set('item._editing',true);
-      },
-      _load : function() {
-        this.set('app.ready',!this.loading);
-      },
-      ready : function() {
-        this.set('app.ready', false);
-        this.set('students',[]);
-        //this.splice('students',0,this.students.length);
-        this.$.ajax.generateRequest();
-      }      
+      }    
     });
   </script>
 </dom-module>

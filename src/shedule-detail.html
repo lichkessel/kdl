@@ -25,10 +25,10 @@
     <!--div hidden$="{{loadingDetail}}">{{sheduleDetail.body}}</div-->
 
     <iron-ajax id="ajax"
-      url="http://jsonplaceholder.typicode.com/posts/[[app.sheduleItem.id]]/comments" 
+      url="http://jsonplaceholder.typicode.com/posts/[[sheduleItem.id]]/comments" 
       last-response="{{classStudents}}"
       last-error="{{error}}"
-      loading="{{loading}}"><!-- userId id title body --></iron-ajax>
+      on-response="_onResponse"></iron-ajax>
 
     <paper-material class="card-holder">
       <template is="dom-repeat" items="{{classStudents}}" >
@@ -72,26 +72,29 @@
     Polymer({
       is : "class-detail"
       ,properties : {
-        app : {
-          type : Object,
-          notify : true
+        sheduleItem : {
+          type:Object
+          ,notify:true
         }
         ,classStudents : {
-          type: Array,
-          notify: true
+          type: Array
+          ,notify: true
         }
-        //sheduleItem : {
-        //  type : Object,
-        //  notify : true,
-          //observer : '_sheduleDetailLoaded'
-        //}
       }
-      //_sheduleDetailLoaded : function(e) {
-      //  this.set('app.title', this.sheduleDetail.title);
-      //},
-      ,observers : [
-        '_load(loading)'
-      ]
+      ,listeners : {
+        'do-load-page' : '_loadPage'
+      }
+      ,ready : function() { 
+        this.fire('component-loaded','shedule-detail');
+      }
+      ,_loadPage : function(e) {
+        this.set('sheduleItem', e.detail.item);
+        this.set('classStudents',[]);
+        this.$.ajax.generateRequest();
+      }
+      ,_onResponse : function(e) {
+        this.fire('page-ready');
+      }
       ,iconToggle : function(exp) {
         return exp ? 'expand-less' : 'expand-more';
       }
@@ -101,15 +104,6 @@
       }
       ,_toggleOwed : function(e) {
         e.model.set('item.expanded', !e.model.item.expanded);
-      }
-      ,_load : function() {
-        this.set('app.ready',!this.loading);
-      }
-      ,ready : function() {
-        this.set('app.ready', false);
-        this.set('classStudents',[]);
-        this.$.ajax.generateRequest();
-        //this.$.subajax.generateRequest();
       }
     });
   </script>

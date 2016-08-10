@@ -58,12 +58,12 @@
 
       [main-title] {
         font-weight: lighter;
-        margin-left: 30px;
+        margin-right: 30px;
       }
 
       [condensed-title] {
         font-weight: lighter;
-        margin-left: 30px;
+        margin-right: 30px;
         overflow: hidden;
         text-overflow: ellipsis;
       }
@@ -81,33 +81,33 @@
 
     <app-drawer-layout  dir="rtl">
       <app-drawer dir="rtl" align="start">
-        <paper-listbox attr-for-selected="name" selected="{{page}}" on-iron-select="_selected" on-iron-activate="_reload">
-          <paper-item name="shedule-list">[[groups.shedule-list]]</paper-item>
-          <paper-item name="student-list">[[groups.student-list]]</paper-item>
-          <paper-item name="class-list">[[groups.class-list]]</paper-item>
-          <paper-item name="price-list">[[groups.price-list]]</paper-item>
+        <paper-listbox attr-for-selected="name" selected="{{page}}" on-iron-activate="_reload">
+          <paper-item name="shedule-list">[[pages.shedule-list.title]]</paper-item>
+          <paper-item name="student-list">[[pages.student-list.title]]</paper-item>
+          <paper-item name="class-list">[[pages.class-list.title]]</paper-item>
+          <paper-item name="price-list">[[pages.price-list.title]]</paper-item>
         </paper-listbox>
       </app-drawer>
       <app-header-layout>
-        <app-header condenses reveals fixed 
+        <app-header condenses fixed 
           effects="waterfall resize-snapped-title blend-background parallax-background">
           <app-toolbar>
-            <paper-icon-button hideme$="[[backButton(app.sheduleItem)]]" icon="menu" drawer-toggle></paper-icon-button>
-            <paper-icon-button hideme$="[[!backButton(app.sheduleItem)]]" icon="arrow-forward" on-tap="_back"></paper-icon-button>
-            <h4 condensed-title>[[appTitle(page)]]</h4>
+            <paper-icon-button hideme$="[[backButton]]" icon="menu" drawer-toggle></paper-icon-button>
+            <paper-icon-button hideme$="[[!backButton]]" icon="arrow-forward" on-tap="_back"></paper-icon-button>
+            <h4 condensed-title>[[title]]</h4>
           </app-toolbar>
           <app-toolbar class="tall">
-            <h1 main-title>[[appTitle(page)]]</h1>
+            <h1 main-title>[[title]]</h1>
           </app-toolbar>        
         </app-header>
         <iron-pages attr-for-selected="id" selected="{{page}}">
-          <class-main id="shedule-list" app="{{app}}" page="{{page}}"></class-main>
-          <class-detail id="shedule-detail" app="{{app}}"></class-detail>
-          <student-list id="student-list" app="{{app}}"></student-list>
-          <price-list id="price-list" app="{{app}}"></price-list>
-          <class-list id="class-list" app="{{app}}"></class-list>
+          <class-main id="shedule-list"></class-main>
+          <class-detail id="shedule-detail"></class-detail>
+          <student-list id="student-list"></student-list>
+          <price-list id="price-list"></price-list>
+          <class-list id="class-list"></class-list>
         </iron-pages>
-        <paper-spinner class="page-spinner" active="{{!app.ready}}"></paper-spinner>
+        <paper-spinner class="page-spinner" active="{{pageLoading}}"></paper-spinner>
       </app-header-layout>
     </app-drawer-layout>
   </template>
@@ -119,71 +119,76 @@
 
       properties: {
         page : {
-          type : String,
-          notify : true,
-          observer : '_pageChanged'
+          type : String
+          ,notify : true
+          ,observer : '_pageChanged'
         }
-        ,app : {
-          type : Object,
-          notify : true,
-          value : {
-            lastpage : '',
-            sheduleItem : {},
-            ready : false
-          }  
-        }
-        ,groups : {
-          type : Object,
-          value : {
-            "shedule-list" : "Existing classes"
-            ,"student-list" : "Students"
-            ,"class-list" : "Classes"
-            ,"price-list" : "Pricelists"
+        ,title : { type : String, notify: true }
+        ,queue : { type: Object, value: {} }
+        ,pageLoading : { type : Boolean, notify: true }
+        ,pages : {
+          type : Object
+          ,value : {
+            "shedule-list" : {
+              title : "Existing classes"
+            }
+            ,"shedule-detail" : {
+
+            }
+            ,"student-list" : { 
+              title :"Students" 
+            }
+            ,"class-list" : { 
+              title : "Classes" 
+            }
+            ,"price-list" : {
+              title : "Pricelists" 
+            }
           }
         }
       }
-      //observers: [
-      //  '_routePageChanged(routeData.page)'
-      //],
-      ,backButton : function(o) {
-        return o.id!==undefined;
+      ,listeners : {
+        'component-loaded' : '_onComponentLoaded'
+        ,'page-ready' : '_onPageReady'
+        ,'load-page' : '_onLoadPage'
       }
-      ,appTitle : function(page) {
-        if(page === 'shedule-detail') { 
-          return this.app.sheduleItem.title
-        } else {
-          return this.groups[page];
-        }
+      ,_onComponentLoaded : function(e) {
+        this.fire('do-load-page', this.pages[e.detail].defer, { node: this.$[ e.detail ], bubbles: false });
+        delete this.queue[e.detail];
       }
-      ,_viewClass : function() {
-        alert(1);
+      ,_onPageReady : function(e) {
+        this.set('pageLoading', false);
+        this.pages[this.page].ready = true;
+      }
+      ,_onLoadPage : function(e) {
+        this.set('pageLoading', true);
+        this.page = e.detail.id;//without notify
+        this.pages[this.page].ready = false;
+        if(e.detail.title)
+          this.set('title', e.detail.title);
+        this.set('backButton', e.detail.backButton);
+        this.importHref( this.resolveUrl(this.page + '.html'), null, null, true);
+        this.pages[e.detail.id].defer = e.detail;
+        this.fire('do-load-page', e.detail, { node: this.$[ e.detail.id], bubbles: false });
+      }
+      ,_pageChanged: function(page, old) {
+        this.set('lastpage', old);
+        this.set('title', this.pages[this.page].title);
+        this.set('backButton', false);
+        if(!this.pages[page].ready)
+          this.fire('load-page',{ id: page });
       }
       ,_reload: function(e) {
         if(e.detail.selected === this.page) {
-          this.$[this.page].ready();
+          this.fire('do-load-page', null, { node: this.$[this.page], bubbles: false });
         }
       }
       ,_back : function() {
         this.set( 'page', this.get('lastpage') );
       }
-      ,_selected : function() {
-        this.set('app.sheduleItem',{});
-      }
-      //_routePageChanged: function(page) {
-      //  this.page = page || 'shedule-list';
-      //},
-      ,_pageChanged: function(page, old) {
-        this.set('lastpage', old);
-        // load page import on demand.
-        this.importHref( this.resolveUrl(page + '.html'), null, null, true);
-        //this.set('route.path','/'+page);
-      }
       ,ready : function() {
-        this.set('page',"shedule-list");
-        //var self= this;
-        //setTimeout(function() { self.$$('paper-tabs').selectIndex('0') },1000);
+        this.set('page','shedule-list');
       }
-
     });
   </script>
 </dom-module>
