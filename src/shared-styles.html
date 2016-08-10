@@ -1,6 +1,15 @@
 <dom-module id="shared-styles">
   <template>
     <style>
+      .page-spinner {
+        position: fixed;
+        top: calc(50% - 14px);
+        left: calc(50% - 14px);
+      }
+      paper-spinner[aria-hidden] 
+      {
+        display:none;
+      }
       .list-item
       {
         display:flex;
@@ -61,7 +70,8 @@
       }
       .form-inputs
       {
-        padding:24px;
+        padding:40px;
+        padding-left:60px;
         padding-top:0;
       }
       .form-controls .save
@@ -86,7 +96,7 @@
         flex-grow:1;
         text-align:start;
         padding:20px;
-        padding-right:20px;
+        padding-right:40px;
         margin:auto;
       }
       .toggle-spinner
@@ -96,6 +106,7 @@
       .card-toggle
       {
         padding:10px;
+        margin-bottom:-50px;
       }
       .card-form {
         flex-grow:1;

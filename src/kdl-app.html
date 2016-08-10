@@ -23,9 +23,11 @@
 <link rel="import" href="../bower_components/paper-spinner/paper-spinner.html">
 
 <!--link rel="import" href="./kdl-icons.html"-->
+<link rel="import" href="./shared-styles.html">
 
 <dom-module id="kdl-app">
   <template>
+    <style include="shared-styles"></style>
     <style>
       :host {
         display: block;
@@ -105,7 +107,7 @@
           <price-list id="price-list" app="{{app}}"></price-list>
           <class-list id="class-list" app="{{app}}"></class-list>
         </iron-pages>
-        <div spinner hidden="{{app.ready}}"><paper-spinner active></paper-spinner></div>
+        <paper-spinner class="page-spinner" active="{{!app.ready}}"></paper-spinner>
       </app-header-layout>
     </app-drawer-layout>
   </template>
