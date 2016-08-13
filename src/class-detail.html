@@ -16,26 +16,18 @@
 <dom-module id="class-detail">
   <template>
     <style include="shared-styles"></style>
-    <!--iron-ajax
-      url="http://jsonplaceholder.typicode.com/posts/[[app.classKey]]" 
-      last-response="{{sheduleDetail}}"
+    <!--iron-ajax id="ajax"
+      url="http://api.kdl.co.il:7999/classes/[[classItem._id]]" 
+      last-response="{{classItem.students}}"
       last-error="{{error}}"
-      loading="{{loadingDetail}}"></iron-ajax-->
-
-    <!--div hidden$="{{loadingDetail}}">{{sheduleDetail.body}}</div-->
-
-    <iron-ajax id="ajax"
-      url="http://jsonplaceholder.typicode.com/posts/[[sheduleItem.id]]/comments" 
-      last-response="{{classStudents}}"
-      last-error="{{error}}"
-      on-response="_onResponse"></iron-ajax>
+      on-response="_onResponse"></iron-ajax-->
 
     <paper-material class="card-holder">
-      <template is="dom-repeat" items="{{classStudents}}" >
+      <template is="dom-repeat" items="{{classItem.students}}" >
         <div class="list-item">
 
           <div class="card">
-            <div class="card-text" hidden$="[[item._toggled]]">[[item.name]]</div>
+            <div class="card-text" hidden$="[[item._toggled]]">[[item.student]]</div>
             <paper-spinner class="toggle-spinner" active or-hidden-1$="[[!item._expanded]]" or-hidden-2$="[[item._ready]]"></paper-spinner>
             <div class="card-toggle">
               <paper-icon-button class="expand-card" icon$="[[iconToggle(item._expanded)]]" on-tap="_toggleStudent"></paper-icon-button>
@@ -53,44 +45,26 @@
 
     </paper-material>
 
-     
-
-      <!--ol hidden$="{{loadingStudents}}">
-        <template is="dom-repeat" items="{{classStudents}}" >
-          <li>
-            <div>[[item.name]]</div>
-            <button on-click="_toggleOwed">toggle</button>
-            <div hidden$="{{!item.expanded}}">
-              <owed-list student-id="{{item.id}}" expanded="{{item.expanded}}"></owed-list>
-            </div>
-           </li>
-        </template>
-      </ol-->
-
   </template>
   <script>
     Polymer({
       is : "class-detail"
       ,properties : {
-        sheduleItem : {
+        classItem : {
           type:Object
           ,notify:true
-        }
-        ,classStudents : {
-          type: Array
-          ,notify: true
         }
       }
       ,listeners : {
         'do-load-page' : '_loadPage'
       }
       ,ready : function() { 
-        this.fire('component-loaded','shedule-detail');
+        this.fire('component-loaded','class-detail');
       }
       ,_loadPage : function(e) {
-        this.set('sheduleItem', e.detail.item);
-        this.set('classStudents',[]);
-        this.$.ajax.generateRequest();
+        this.set('classItem', e.detail.item);
+        this.fire('page-ready');
+        //this.$.ajax.generateRequest();
       }
       ,_onResponse : function(e) {
         this.fire('page-ready');

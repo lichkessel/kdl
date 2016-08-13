@@ -82,10 +82,10 @@
     <app-drawer-layout  dir="rtl">
       <app-drawer dir="rtl" align="start">
         <paper-listbox attr-for-selected="name" selected="{{page}}" on-iron-activate="_reload">
-          <paper-item name="shedule-list">[[pages.shedule-list.title]]</paper-item>
-          <paper-item name="student-list">[[pages.student-list.title]]</paper-item>
           <paper-item name="class-list">[[pages.class-list.title]]</paper-item>
-          <paper-item name="price-list">[[pages.price-list.title]]</paper-item>
+          <paper-item name="student-list">[[pages.student-list.title]]</paper-item>
+          <!--paper-item name="class-list">[[pages.class-list.title]]</paper-item>
+          <paper-item name="price-list">[[pages.price-list.title]]</paper-item-->
         </paper-listbox>
       </app-drawer>
       <app-header-layout>
@@ -101,11 +101,11 @@
           </app-toolbar>        
         </app-header>
         <iron-pages attr-for-selected="id" selected="{{page}}">
-          <class-main id="shedule-list"></class-main>
-          <class-detail id="shedule-detail"></class-detail>
+          <class-list id="class-list"></class-list>
+          <class-detail id="class-detail"></class-detail>
           <student-list id="student-list"></student-list>
           <price-list id="price-list"></price-list>
-          <class-list id="class-list"></class-list>
+          <!--class-list id="class-list"></class-list-->
         </iron-pages>
         <paper-spinner class="page-spinner" active="{{pageLoading}}"></paper-spinner>
       </app-header-layout>
@@ -129,10 +129,10 @@
         ,pages : {
           type : Object
           ,value : {
-            "shedule-list" : {
+            "class-list" : {
               title : "Existing classes"
             }
-            ,"shedule-detail" : {
+            ,"class-detail" : {
 
             }
             ,"student-list" : { 
@@ -162,10 +162,9 @@
       }
       ,_onLoadPage : function(e) {
         this.set('pageLoading', true);
-        this.page = e.detail.id;//without notify
+        this.page = e.detail.id; //without notify
         this.pages[this.page].ready = false;
-        if(e.detail.title)
-          this.set('title', e.detail.title);
+        e.detail.title && this.set('title', e.detail.title);
         this.set('backButton', e.detail.backButton);
         this.importHref( this.resolveUrl(this.page + '.html'), null, null, true);
         this.pages[e.detail.id].defer = e.detail;
@@ -187,7 +186,7 @@
         this.set( 'page', this.get('lastpage') );
       }
       ,ready : function() {
-        this.set('page','shedule-list');
+        this.set('page','class-list');
       }
     });
   </script>

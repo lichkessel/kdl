@@ -35,7 +35,7 @@
 
     </style>
     <iron-ajax id="ajax" 
-      url="http://jsonplaceholder.typicode.com/users" 
+      url="http://api.kdl.co.il:7999/students" 
       last-response="{{students}}"
       last-error="{{error}}"
       on-response="_onResponse"></iron-ajax>
@@ -46,7 +46,7 @@
         <div class="list-item" editing$="[[item._editing]]">
 
           <div class="card">
-            <div class="card-text" hidden$="[[item._editing]]">[[item.name]]</div>
+            <div class="card-text" hidden$="[[item._editing]]">[[item.fullName]]</div>
             <div class="card-toggle">
               <span hidden$="[[item._editing]]"><paper-icon-button class="expand-card" icon="expand-more" on-tap="_openEdit"></paper-icon-button></span>
               <span hidden$="[[!item._editing]]"><paper-icon-button class="expand-card" icon="expand-less" on-tap="_cancelCard"></paper-icon-button></span>
@@ -64,9 +64,8 @@
                 on-iron-form-error="_onCardError"
                 >
                 <div class="form-inputs">
-                  <paper-input name="name" label="Student name" value="{{item.name}}" required error-message="Required" auto-validate$="{{!item._new}}" dir="rtl"></paper-input>
-                  <paper-input name="email" label="E-mail" value="{{item.email}}" required error-message="Required" auto-validate$="{{!item._new}}" dir="rtl"></paper-input>
-                  <paper-input name="phone" label="Phone" value="{{item.phone}}" dir="rtl"></paper-input>
+                  <paper-input name="name" label="Student name" value="{{item.fullName}}" required error-message="Required" auto-validate$="{{!item._new}}" dir="rtl"></paper-input>
+                  <paper-input name="phone" label="Phone" value="{{item.phoneNumber}}" dir="rtl"></paper-input>
                   <!--div hidden$="{{!item._error}}">[[item._error]]</div-->
                 </div>
               </form>
