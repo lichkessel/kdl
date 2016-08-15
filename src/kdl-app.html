@@ -10,17 +10,18 @@
 <link rel="import" href="../bower_components/app-layout/app-header-layout/app-header-layout.html">
 <link rel="import" href="../bower_components/app-layout/app-toolbar/app-toolbar.html">
 
-<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
 
 <link rel="import" href="../bower_components/iron-pages/iron-pages.html">
 <link rel="import" href="../bower_components/iron-selector/iron-selector.html">
 <link rel="import" href="../bower_components/iron-icons/iron-icons.html">
 
-
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../bower_components/paper-listbox/paper-listbox.html">
 <link rel="import" href="../bower_components/paper-item/paper-item.html">
 <link rel="import" href="../bower_components/paper-tabs/paper-tabs.html">
 <link rel="import" href="../bower_components/paper-spinner/paper-spinner.html">
+<link rel="import" href="../bower_components/paper-toast/paper-toast.html">
+<link rel="import" href="../bower_components/paper-fab/paper-fab.html">
 
 <!--link rel="import" href="./kdl-icons.html"-->
 <link rel="import" href="./shared-styles.html">
@@ -108,6 +109,7 @@
           <!--class-list id="class-list"></class-list-->
         </iron-pages>
         <paper-spinner class="page-spinner" active="{{pageLoading}}"></paper-spinner>
+        <paper-toast id="toast" horizontal-align="right"></paper-toast>
       </app-header-layout>
     </app-drawer-layout>
   </template>
@@ -118,7 +120,15 @@
       is: 'kdl-app',
 
       properties: {
-        page : {
+        app : {
+          type: Object
+          ,notify: true
+          ,value : {
+            title : 'Xxxx'
+            ,item : {}
+          }
+        }
+        ,page : {
           type : String
           ,notify : true
           ,observer : '_pageChanged'
@@ -151,24 +161,29 @@
         'component-loaded' : '_onComponentLoaded'
         ,'page-ready' : '_onPageReady'
         ,'load-page' : '_onLoadPage'
+        ,'page-error' : '_onPageError'
       }
       ,_onComponentLoaded : function(e) {
         this.fire('do-load-page', this.pages[e.detail].defer, { node: this.$[ e.detail ], bubbles: false });
-        delete this.queue[e.detail];
+        delete this.pages[e.detail].defer;
       }
       ,_onPageReady : function(e) {
         this.set('pageLoading', false);
         this.pages[this.page].ready = true;
+        if(e.detail.title) {
+          this.set('title', e.detail.title);
+        }
+        if(e.detail.backButton) {
+          this.set('backButton', e.detail.backButton);
+        }
       }
       ,_onLoadPage : function(e) {
         this.set('pageLoading', true);
         this.page = e.detail.id; //without notify
-        this.pages[this.page].ready = false;
-        e.detail.title && this.set('title', e.detail.title);
-        this.set('backButton', e.detail.backButton);
         this.importHref( this.resolveUrl(this.page + '.html'), null, null, true);
         this.pages[e.detail.id].defer = e.detail;
-        this.fire('do-load-page', e.detail, { node: this.$[ e.detail.id], bubbles: false });
+        this.pages[e.detail.id].ready = false;
+        this.fire('do-load-page', e.detail, { node: this.$[ e.detail.id ], bubbles: false });
       }
       ,_pageChanged: function(page, old) {
         this.set('lastpage', old);
@@ -176,6 +191,9 @@
         this.set('backButton', false);
         if(!this.pages[page].ready)
           this.fire('load-page',{ id: page });
+      }
+      ,_onPageError : function(e) {
+        this.$.toast.show({ text: e.detail.message, duration: 3000});
       }
       ,_reload: function(e) {
         if(e.detail.selected === this.page) {

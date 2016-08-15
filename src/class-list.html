@@ -16,19 +16,23 @@
     </style>
 
     <iron-ajax id="ajax"
-      url="http://api.kdl.co.il:7999/classes" 
-      last-response="{{classes}}" 
-      last-error="{{error}}" 
-      on-response="_onResponse"><!-- userId id title body --></iron-ajax>
+      url="http://seerio.us/kdlproxy/classes" 
+      on-response="_onResponse"
+      on-error="_onError"
+      ></iron-ajax>
 
     <template is="dom-repeat" items="{{classes}}" as="item" initial-count="20">
       <paper-card heading="[[item.className]]" class="list-card">
         <div class="card-content"></div>
         <div class="card-actions">
-          <paper-button on-tap="_viewClass">View</paper-button>
+          <paper-button on-tap="_viewClass">Detail</paper-button>
         </div>
       </paper-card>
     </template>
+
+    <paper-fab class="add-button" icon="add" on-tap="_addNew"></paper-fab>
+
+    </div>
 
   </template>
   <script>
@@ -45,14 +49,22 @@
         'do-load-page' : '_loadPage'
       }
       ,_loadPage : function(e) {
-        this.set('classes',[]);
         this.$.ajax.generateRequest();
       }
       ,_onResponse : function(e) {
         this.fire('page-ready');
+        if(!e.detail.response.error) {
+          this.set('classes',e.detail.response);
+        } else {
+          this.fire('page-error', { message: e.detail.response.error })
+        }
+      }
+      ,_onError : function(e) {
+        this.fire('page-ready');
+        this.fire('page-error', { message: 'Network problems! Try again later' })
       }
       ,_viewClass : function(e) {
-        this.fire('load-page', { id: 'class-detail', item: e.model.item, title: e.model.item.title, backButton: true })
+        this.fire('load-page', { id: 'class-detail', item: e.model.item })
       }
       ,ready : function() {
         this.fire('component-loaded','class-list');

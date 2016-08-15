@@ -9,7 +9,6 @@
 <link rel="import" href="../bower_components/paper-button/paper-button.html">
 <link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../bower_components/paper-fab/paper-fab.html">
-<link rel="import" href="../bower_components/paper-toast/paper-toast.html">
 <link rel="import" href="../bower_components/paper-material/paper-material.html">
 
 <link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
@@ -39,7 +38,6 @@
       last-response="{{students}}"
       last-error="{{error}}"
       on-response="_onResponse"></iron-ajax>
-    <paper-toast id="toast" horizontal-align="right"></paper-toast>
     <a id="topfocus"></a>
     <paper-material class="card-holder">
       <template id="repeater" is="dom-repeat" items="{{students}}">
@@ -66,7 +64,6 @@
                 <div class="form-inputs">
                   <paper-input name="name" label="Student name" value="{{item.fullName}}" required error-message="Required" auto-validate$="{{!item._new}}" dir="rtl"></paper-input>
                   <paper-input name="phone" label="Phone" value="{{item.phoneNumber}}" dir="rtl"></paper-input>
-                  <!--div hidden$="{{!item._error}}">[[item._error]]</div-->
                 </div>
               </form>
               <div class="form-controls">
@@ -142,8 +139,6 @@
       },
       _onCardError : function(e) {
         e.model.set('item._sending',false);
-        this.$.toast.show({ text: 'Sorry! Network problems. Try again later.', duration: 3000});
-        e.model.set('item._error', true);
       },
       _submitCard : function(e) {
         var form = e.currentTarget.parentNode.parentNode.querySelector('form');

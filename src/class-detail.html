@@ -9,6 +9,7 @@
 <link rel="import" href="../bower_components/paper-material/paper-material.html">
 <link rel="import" href="../bower_components/paper-spinner/paper-spinner.html">
 <link rel="import" href="../bower_components/paper-card/paper-card.html">
+<link rel="import" href="../bower_components/paper-fab/paper-fab.html">
 
 
 <link rel="import" href="./owed-list.html">
@@ -23,11 +24,12 @@
       on-response="_onResponse"></iron-ajax-->
 
     <paper-material class="card-holder">
+      <div class="empty-container" hidden$="[[classItem.students.length]]">There are no students yet</div>
       <template is="dom-repeat" items="{{classItem.students}}" >
         <div class="list-item">
 
           <div class="card">
-            <div class="card-text" hidden$="[[item._toggled]]">[[item.student]]</div>
+            <div class="card-text" hidden$="[[item._toggled]]">[[item.student.fullName]]</div>
             <paper-spinner class="toggle-spinner" active or-hidden-1$="[[!item._expanded]]" or-hidden-2$="[[item._ready]]"></paper-spinner>
             <div class="card-toggle">
               <paper-icon-button class="expand-card" icon$="[[iconToggle(item._expanded)]]" on-tap="_toggleStudent"></paper-icon-button>
@@ -45,6 +47,8 @@
 
     </paper-material>
 
+    <paper-fab class="add-button" icon="add" on-tap="_addNew"></paper-fab>
+
   </template>
   <script>
     Polymer({
@@ -58,17 +62,21 @@
       ,listeners : {
         'do-load-page' : '_loadPage'
       }
-      ,ready : function() { 
+      ,ready : function() {
         this.fire('component-loaded','class-detail');
       }
       ,_loadPage : function(e) {
         this.set('classItem', e.detail.item);
-        this.fire('page-ready');
+        console.log(e.detail.item);
+        this.fire('page-ready', { title: this.classItem.className, backButton: true });
         //this.$.ajax.generateRequest();
       }
-      ,_onResponse : function(e) {
-        this.fire('page-ready');
+      /*,_onResponse : function(e) {
+        this.fire('page-ready', { title: this.classItem.className, backButton: true });
       }
+      ,_onError : function(e) {
+
+      }*/
       ,iconToggle : function(exp) {
         return exp ? 'expand-less' : 'expand-more';
       }
