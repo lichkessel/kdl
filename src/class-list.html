@@ -2,6 +2,7 @@
 <link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
 
 <link rel="import" href="../bower_components/paper-card/paper-card.html">
+<link rel="import" href="../bower_components/paper-fab/paper-fab.html">
 <link rel="import" href="../bower_components/paper-button/paper-button.html">
 
 <!--link rel="import" href="../bower_components/iron-fit-behavior/iron-fit-behavior.html"-->
@@ -15,14 +16,21 @@
 
     </style>
 
-    <iron-ajax id="ajax"
+    <iron-ajax id="get"
       url="http://seerio.us/kdlproxy/classes" 
-      on-response="_onResponse"
-      on-error="_onError"
+      on-response="_onGetResponse"
+      on-error="_onGetError"
+      ></iron-ajax>
+
+    <iron-ajax id="put"
+      url="http://seerio.us/kdlproxy/classes" 
+      on-response="_onPostResponse"
+      on-error="_onPostError"
+      method="POST"
       ></iron-ajax>
 
     <template is="dom-repeat" items="{{classes}}" as="item" initial-count="20">
-      <paper-card heading="[[item.className]]" class="list-card">
+      <paper-card heading="{{item.className}}" class="list-card">
         <div class="card-content"></div>
         <div class="card-actions">
           <paper-button on-tap="_viewClass">Detail</paper-button>
@@ -37,37 +45,46 @@
   </template>
   <script>
     Polymer({
-      is:'class-list',
-      properties : {
+      is:'class-list'
+      ,properties : {
         classes : {
-          type: Array,
-          notify:true,
-          value : []
+          type: Array
+          ,notify:true
+          ,value : []
+        }
+        ,title : {
+          type:String
+          ,notify:true
+          ,value:'Classes'
         }
       }
-      ,listeners : {
-        'do-load-page' : '_loadPage'
-      }
-      ,_loadPage : function(e) {
-        this.$.ajax.generateRequest();
-      }
-      ,_onResponse : function(e) {
-        this.fire('page-ready');
-        if(!e.detail.response.error) {
-          this.set('classes',e.detail.response);
-        } else {
-          this.fire('page-error', { message: e.detail.response.error })
-        }
-      }
-      ,_onError : function(e) {
-        this.fire('page-ready');
-        this.fire('page-error', { message: 'Network problems! Try again later' })
+      ,_addNew : function(e) {
+        this.unshift( 'classes', { _new : true, className:'New!', students:[] } );
+        this.domHost.set( 'classItem', this.classes[0] );
       }
       ,_viewClass : function(e) {
-        this.fire('load-page', { id: 'class-detail', item: e.model.item })
+        this.domHost.set('classItem', e.model.item);
       }
-      ,ready : function() {
-        this.fire('component-loaded','class-list');
+      ,_onPostResponse : function(e) {
+
+      }
+      ,_onPostError : function(e) {
+
+      }
+      ,_onGetResponse : function(e) {
+        this.domHost.set('loaded',true);
+        if(!e.detail.response.error) {
+          this.set('classes', e.detail.response);
+        } else {
+          this.domHost.set('error',e.detail.response.error);
+        }
+      }
+      ,_onGetError : function(e) {
+        this.domHost.set('loaded',true);
+        this.domHost.set('error','Network problems! Try again later');
+      }
+      ,load : function() {
+        this.$.get.generateRequest();
       }
     });
   </script>

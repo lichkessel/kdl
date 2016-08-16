@@ -25,6 +25,9 @@
 
 <!--link rel="import" href="./kdl-icons.html"-->
 <link rel="import" href="./shared-styles.html">
+<link rel="import" href="./class-list.html">
+<link rel="import" href="./class-detail.html">
+<link rel="import" href="./student-list.html">
 
 <dom-module id="kdl-app">
   <template>
@@ -83,8 +86,8 @@
     <app-drawer-layout  dir="rtl">
       <app-drawer dir="rtl" align="start">
         <paper-listbox attr-for-selected="name" selected="{{page}}" on-iron-activate="_reload">
-          <paper-item name="class-list">[[pages.class-list.title]]</paper-item>
-          <paper-item name="student-list">[[pages.student-list.title]]</paper-item>
+          <paper-item name="class-list">Classes</paper-item>
+          <paper-item name="student-list">Students</paper-item>
           <!--paper-item name="class-list">[[pages.class-list.title]]</paper-item>
           <paper-item name="price-list">[[pages.price-list.title]]</paper-item-->
         </paper-listbox>
@@ -102,13 +105,13 @@
           </app-toolbar>        
         </app-header>
         <iron-pages attr-for-selected="id" selected="{{page}}">
-          <class-list id="class-list"></class-list>
-          <class-detail id="class-detail"></class-detail>
-          <student-list id="student-list"></student-list>
+          <class-list id="class-list" top></class-list>
+          <class-detail id="class-detail" class-item="{{classItem}}"></class-detail>
+          <student-list id="student-list" top></student-list>
           <price-list id="price-list"></price-list>
           <!--class-list id="class-list"></class-list-->
         </iron-pages>
-        <paper-spinner class="page-spinner" active="{{pageLoading}}"></paper-spinner>
+        <paper-spinner class="page-spinner" active="{{!loaded}}"></paper-spinner>
         <paper-toast id="toast" horizontal-align="right"></paper-toast>
       </app-header-layout>
     </app-drawer-layout>
@@ -120,88 +123,62 @@
       is: 'kdl-app',
 
       properties: {
-        app : {
+        page : {
+          type: String
+          ,notify: true
+          ,observer:'_pageChanged'
+        }
+        ,loaded : {
+          type : Boolean
+          ,notify: true
+        }
+        ,error : {
+          type: String
+          ,notify:true
+          ,observer : '_pageError'
+        }
+        ,title : {
+          type: String
+          ,notify: true
+        }
+        ,classItem : {
           type: Object
           ,notify: true
-          ,value : {
-            title : 'Xxxx'
-            ,item : {}
-          }
+          ,observer:'_classItemChanged'
         }
-        ,page : {
-          type : String
-          ,notify : true
-          ,observer : '_pageChanged'
-        }
-        ,title : { type : String, notify: true }
-        ,queue : { type: Object, value: {} }
-        ,pageLoading : { type : Boolean, notify: true }
-        ,pages : {
-          type : Object
-          ,value : {
-            "class-list" : {
-              title : "Existing classes"
-            }
-            ,"class-detail" : {
-
-            }
-            ,"student-list" : { 
-              title :"Students" 
-            }
-            ,"class-list" : { 
-              title : "Classes" 
-            }
-            ,"price-list" : {
-              title : "Pricelists" 
-            }
-          }
+        ,lastPage : {
+          type:String
         }
       }
-      ,listeners : {
-        'component-loaded' : '_onComponentLoaded'
-        ,'page-ready' : '_onPageReady'
-        ,'load-page' : '_onLoadPage'
-        ,'page-error' : '_onPageError'
-      }
-      ,_onComponentLoaded : function(e) {
-        this.fire('do-load-page', this.pages[e.detail].defer, { node: this.$[ e.detail ], bubbles: false });
-        delete this.pages[e.detail].defer;
-      }
-      ,_onPageReady : function(e) {
-        this.set('pageLoading', false);
-        this.pages[this.page].ready = true;
-        if(e.detail.title) {
-          this.set('title', e.detail.title);
-        }
-        if(e.detail.backButton) {
-          this.set('backButton', e.detail.backButton);
+      ,_classItemChanged : function(item) {
+        if(item) {
+          this.load('class-detail');
         }
       }
-      ,_onLoadPage : function(e) {
-        this.set('pageLoading', true);
-        this.page = e.detail.id; //without notify
-        this.importHref( this.resolveUrl(this.page + '.html'), null, null, true);
-        this.pages[e.detail.id].defer = e.detail;
-        this.pages[e.detail.id].ready = false;
-        this.fire('do-load-page', e.detail, { node: this.$[ e.detail.id ], bubbles: false });
-      }
-      ,_pageChanged: function(page, old) {
-        this.set('lastpage', old);
-        this.set('title', this.pages[this.page].title);
-        this.set('backButton', false);
-        if(!this.pages[page].ready)
-          this.fire('load-page',{ id: page });
-      }
-      ,_onPageError : function(e) {
-        this.$.toast.show({ text: e.detail.message, duration: 3000});
+      ,_pageError : function(error) {
+        if(error)
+          this.$.toast.show({ text: e, duration: 3000});
       }
       ,_reload: function(e) {
         if(e.detail.selected === this.page) {
-          this.fire('do-load-page', null, { node: this.$[this.page], bubbles: false });
+          this.load(this.page);
         }
       }
       ,_back : function() {
-        this.set( 'page', this.get('lastpage') );
+        this.$[this.page]._back();
+      }
+      ,load : function(name) {
+        this.$[name].loaded = true;
+        this.set('page', name);
+        this.set('loaded', false);
+        this.set('error', null);
+        this.$[name].load();
+      }
+      ,_pageChanged: function(page, old) {
+        this.set('title', this.$[page].title );
+        this.set('backButton', !!this.$[page].backButton );
+        if(!this.$[page].loaded)
+          this.load(page);
       }
       ,ready : function() {
         this.set('page','class-list');

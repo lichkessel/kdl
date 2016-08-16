@@ -91,32 +91,23 @@
     Polymer({
       is: 'student-list',
       properties : {
-        app : {
-          type:Object,
-          notify:true
-        },
-        students : {
+        title : {
+          type:String
+          ,notify:true
+          ,value:'Students'
+        }
+        ,students : {
           type: Array,
           notify: true,
           value : []
-        },
-        editing : {
+        }
+        ,editing : {
           type:Boolean,
           notify:true
         }
       }
-      ,listeners : {
-        'do-load-page' : '_pageLoad'
-      }
-      ,ready : function() {
-        this.fire('component-loaded','student-list');
-      }
-      ,_pageLoad : function(e) {
-        this.set('students',[]);
-        this.$.ajax.generateRequest();
-      }
       ,_onResponse : function(e) {
-        this.fire('page-ready');
+        this.domHost.set('loaded',true);
       }
       ,_onCardPresubmit : function(e) {
         //var form = Polymer.dom(e).localTarget;
@@ -173,14 +164,17 @@
         e.model.set('item._editing',false);
         this.set('editing', false);
         e.stopPropagation();
-      },
-      _openEdit : function(e) {
+      }
+      ,_openEdit : function(e) {
         this.set('editing', true);
         if(e.model.item._editing) return;
         var self = this;
         this.students.forEach(function(d,i) { self.set('students.'+i+'._editing',false) })
         e.model.set('item._editing',true);
-      }    
+      }
+      ,load : function() {
+        this.$.ajax.generateRequest();
+      }
     });
   </script>
 </dom-module>
