@@ -467,7 +467,7 @@
           [].forEach.call(root.querySelectorAll('.student:not([key])[deleted]'),
           function(item) {
             var student = studentHost.modelForElement(item).student;
-            self.splice('classItem.students',self.classItem.students.indexOf(student),1);
+            self.arrayDelete('classItem.students',student);
           });
 
           //update students
@@ -496,21 +496,14 @@
               ajax.generateRequest();
             });
 
-          })
+            //cleanup products
+            [].forEach.call(subRoot.querySelectorAll('.product:not([key])[deleted]'),
+            function(item) {
+              var product = productHost.modelForElement(item).product;
+              studentModel.arrayDelete('student.products',product);
+            });
 
-          /*
-          [].forEach.call(Polymer.dom(self.root).querySelectorAll('.student[key][deleted]>[name="addStudent"]'),function(e) {
-            self.fire('run-drop-student',null, { node : e });
-          });
-          */
-          /*
-          [].forEach.call(Polymer.dom(self.root).querySelectorAll('.student[key=""]>iron-ajax'),function(e) {
-            self.fire('run-add',null, { node : e });
-          });
-          [].forEach.call(Polymer.dom(self.root).querySelectorAll('.student[key=""]>iron-ajax'),function(e) {
-            self.fire('run-add',null, { node : e });
-          });
-          */
+          })
         } else {//create it now
           console.log('Creating new one...');
           var result = { 
