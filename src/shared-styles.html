@@ -1,6 +1,9 @@
 <dom-module id="shared-styles">
   <template>
     <style>
+      :host {
+        --card-padding:24px;
+      }
       .page-spinner {
         position: fixed;
         top: calc(50% - 14px);
@@ -10,11 +13,19 @@
       {
         display:none;
       }
+      .card-spinner {
+        margin-top: 10px;
+        margin-bottom: 10px;
+        margin-left: auto;
+        margin-right: auto;
+        display: block;
+      }
       .list-item
       {
         display:flex;
         flex-direction:column;
         border-bottom:1px solid var(--app-primary-border-color);
+        background:white;
       }
       .list-item[editing] 
       {
@@ -61,9 +72,11 @@
       }
       .add-item-button 
       {
-        
+        margin:0 auto;
+        margin-top:-28px;
+        margin-bottom:-28px;
       }
-      .form-controls 
+      .form-controls
       {
         text-align:end;
         border-top:1px solid var(--app-secondary-border-color);
@@ -72,10 +85,30 @@
         padding-left:8px;
         padding-right:8px;
       }
+      .form-subitems
+      {
+        text-align:end;
+        border-top:1px solid var(--app-secondary-border-color);
+        min-height:36px;
+      }
+      .form-subitems
+      {
+        background-color:var(--app-secondary-border-color);
+      }
       .form-inputs
       {
         padding:50px;
+        padding-left:var(--card-padding);
+        padding-right:var(--card-padding);
         padding-top:0;
+      }
+      .form-subtitle
+      {
+        padding:calc(var(--card-padding) - 8px);;
+        padding-left:var(--card-padding);
+        padding-right:var(--card-padding);
+        padding-bottom:calc(var(--card-padding) - 8px);
+        font-weight:bold;
       }
       .form-controls .save
       {
@@ -87,7 +120,7 @@
       }
       .card-holder 
       {
-        margin:10px;
+        margin:0;
       }
       .card {
         display:flex;
@@ -99,8 +132,30 @@
         flex-grow:1;
         text-align:start;
         padding:20px;
-        padding-right:40px;
+        padding-right:var(--card-padding);
         margin:auto;
+        /*border-bottom:1px solid var(--app-secondary-border-color);*/
+      }
+      .card-title {
+        display:flex;
+        align-items:center;
+        min-height:70px;
+        padding:10px;
+        padding-right:var(--card-padding);
+      }
+      .card-title-text {
+        flex-grow:0.5;
+      }
+      .card-title-text .text {
+        font-size:150%;
+        flex-grow:1;
+      }
+      .card-title-text .input {
+        flex-grow:1;
+      }
+      .card-title-buttons {
+        flex-grow:0.5;
+        text-align: end;
       }
       .toggle-spinner
       {
@@ -114,6 +169,12 @@
       .card-form {
         flex-grow:1;
       }
+      .no-items {
+        font-style:italic;
+        text-align:center;
+        padding:20px;
+      }
+      [hidden] { display:none !important;}
       [or-hidden-1],
       [or-hidden-2] 
       { 

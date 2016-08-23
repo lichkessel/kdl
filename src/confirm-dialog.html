@@ -1,0 +1,59 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="./shared-styles.html">
+<link rel="import" href="../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+
+<link rel="import" href="../bower_components/neon-animation/animations/scale-up-animation.html">
+<link rel="import" href="../bower_components/neon-animation/animations/fade-out-animation.html">
+
+<dom-module id="confirm-dialog">
+  <style include="shared-styles"></style>
+  <template>
+    <paper-dialog id="dialog"
+                  on-iron-overlay-closed="_finished" 
+                  entry-animation="scale-up-animation"
+                  exit-animation="fade-out-animation" modal>
+      <div>[[text]]</div>
+      <div class="buttons">
+        <paper-button dialog-confirm>Yes</paper-button>
+        <paper-button dialog-dismiss autofocus>No</paper-button>
+      </div>
+    </paper-dialog>
+  </template>
+  <script>
+  Polymer({
+    is : "confirm-dialog"
+    ,properties : {
+      text : {
+        type: String
+        ,notify : true
+        ,value : ''
+      },
+      eventName : {
+        type : String
+        ,notify : true
+        ,value : 'confirm-dialog-ok'
+      },
+      target : {
+        type : Object,
+        notify: true
+      }
+    }
+    ,open : function() {
+      this.$.dialog.open();
+    }
+    ,_finished : function(e) {
+      if(e.detail.confirmed && !e.detail.canceled) {
+        this.fire(this.eventName, null, { node: this.target, bubbles: false });
+      }
+    }
+  });
+  </script>
+</dom-module>
+
+
+
+
+
+
+

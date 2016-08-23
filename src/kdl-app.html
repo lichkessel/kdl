@@ -28,6 +28,9 @@
 <link rel="import" href="./class-list.html">
 <link rel="import" href="./class-detail.html">
 <link rel="import" href="./student-list.html">
+<link rel="import" href="./confirm-dialog.html">
+<link rel="import" href="./choose-student.html">
+<link rel="import" href="./choose-product.html">
 
 <dom-module id="kdl-app">
   <template>
@@ -85,11 +88,9 @@
 
     <app-drawer-layout  dir="rtl">
       <app-drawer dir="rtl" align="start">
-        <paper-listbox attr-for-selected="name" selected="{{page}}" on-iron-activate="_reload">
-          <paper-item name="class-list">Classes</paper-item>
-          <paper-item name="student-list">Students</paper-item>
-          <!--paper-item name="class-list">[[pages.class-list.title]]</paper-item>
-          <paper-item name="price-list">[[pages.price-list.title]]</paper-item-->
+        <paper-listbox attr-for-selected="id" selected="{{page}}" on-iron-activate="_reload">
+          <paper-item id="class-list">Classes</paper-item>
+          <paper-item id="student-list">Students</paper-item>
         </paper-listbox>
       </app-drawer>
       <app-header-layout>
@@ -104,16 +105,20 @@
             <h1 main-title>[[title]]</h1>
           </app-toolbar>        
         </app-header>
-        <iron-pages attr-for-selected="id" selected="{{page}}">
-          <class-list id="class-list" top></class-list>
-          <class-detail id="class-detail" class-item="{{classItem}}"></class-detail>
-          <student-list id="student-list" top></student-list>
-          <price-list id="price-list"></price-list>
-          <!--class-list id="class-list"></class-list-->
+        <iron-pages selected="{{page}}" attr-for-selected="name">
+          <iron-pages name="class-list" selected="{{subpage}}" attr-for-selected="name">
+            <class-list name="index" title="Classes"></class-list>
+            <class-detail name="class-detail" class-item="{{classItem}}" title="Class detail"></class-detail>
+          </iron-pages>
+          <student-list name="student-list" title="Students"></student-list>
+          <price-list name="price-list"></price-list>
         </iron-pages>
         <paper-spinner class="page-spinner" active="{{!loaded}}"></paper-spinner>
         <paper-toast id="toast" horizontal-align="right"></paper-toast>
       </app-header-layout>
+      <choose-student id="studentlist"></choose-student>
+      <choose-product id="productlist"></choose-product>
+      <confirm-dialog id="confirmDialog"></confirm-dialog>
     </app-drawer-layout>
   </template>
 
@@ -126,16 +131,15 @@
         page : {
           type: String
           ,notify: true
-          ,observer:'_pageChanged'
+        }
+        ,subpage : {
+          type: String
+          ,notify: true
+          ,value:'index'
         }
         ,loaded : {
           type : Boolean
           ,notify: true
-        }
-        ,error : {
-          type: String
-          ,notify:true
-          ,observer : '_pageError'
         }
         ,title : {
           type: String
@@ -144,44 +148,77 @@
         ,classItem : {
           type: Object
           ,notify: true
-          ,observer:'_classItemChanged'
         }
         ,lastPage : {
           type:String
         }
-      }
-      ,_classItemChanged : function(item) {
-        if(item) {
-          this.load('class-detail');
+        ,backButton : {
+          type: Boolean
+          ,computed:'computeBackButton(page,subpage)'
+        }
+        ,confirmText : {
+          type : String
+          ,notify:true
         }
       }
-      ,_pageError : function(error) {
-        if(error)
-          this.$.toast.show({ text: e, duration: 3000});
+      ,observers : [
+        '_pageChanged(page,subpage)'
+      ]
+      ,listeners : {
+        'page-error' : '_onPageError'
+        ,'students-choosen' : '_onStudentsChoosen'
+        ,'products-choosen' : '_onProductsChoosen'
+        ,'view-class' : '_onViewClass'
+        ,'confirm' : '_onConfirm'
+      }
+      ,_onStudentsChoosen : function(e) {
+        this.fire('students-added',e.detail,{ node: this.controller('class-list','class-detail'), bubbles: false });
+      }
+      ,_onProductsChoosen : function(e) {
+        this.fire('products-added',e.detail,{ node: this.controller('class-list','class-detail'), bubbles: false });
+      }
+      ,_onConfirm : function(e) {
+        var dialog = this.$.confirmDialog;
+        dialog.eventName = e.detail.eventName;
+        dialog.text = e.detail.text;
+        dialog.target = e.detail.target;
+        dialog.open();
+      }
+      ,_onViewClass : function(e) {
+        this.set( 'classItem', e.detail );
+        this.load('class-list', 'class-detail');
+      }
+      ,computeBackButton: function(page,subpage) {
+        return subpage !== 'index';
+      }
+      ,_onPageError : function(e) {
+        this.$.toast.show({ text: e.detail.message, duration: 3000});
       }
       ,_reload: function(e) {
-        if(e.detail.selected === this.page) {
-          this.load(this.page);
-        }
+        this.load(e.detail.selected);
       }
       ,_back : function() {
-        this.$[this.page]._back();
+        this.load(this.page);
       }
-      ,load : function(name) {
-        this.$[name].loaded = true;
-        this.set('page', name);
-        this.set('loaded', false);
-        this.set('error', null);
-        this.$[name].load();
+      ,controller : function(item,subitem) {
+        return this.$$('[name="'+item+'"]>[name="'+(subitem || 'index')+'"]') || this.$$('[name="'+item+'"]');
       }
-      ,_pageChanged: function(page, old) {
-        this.set('title', this.$[page].title );
-        this.set('backButton', !!this.$[page].backButton );
-        if(!this.$[page].loaded)
-          this.load(page);
+      ,load : function(item,subitem) {
+        console.log('...load...('+item+', '+subitem+')');
+        this.set( 'page', item );
+        this.set( 'subpage', subitem || 'index');
+        this.set( 'loaded', false);
+        var page = this.controller(item,subitem);
+        this.set('title', page.title );
+        page.load();
+      }
+      ,_pageChanged: function(page, subpage) {
+        console.log(page +' '+subpage);
+        //this.set('subpage','index');
+        //this.load(page,subpage);
       }
       ,ready : function() {
-        this.set('page','class-list');
+        this.load('class-list');
       }
     });
   </script>

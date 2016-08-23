@@ -1,0 +1,90 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="./shared-styles.html">
+<link rel="import" href="../bower_components/paper-spinner/paper-spinner.html">
+<link rel="import" href="../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/paper-checkbox/paper-checkbox.html">
+
+<link rel="import" href="../bower_components/neon-animation/animations/scale-up-animation.html">
+<link rel="import" href="../bower_components/neon-animation/animations/fade-out-animation.html">
+
+<dom-module id="choose-product">
+  <style include="shared-styles"></style>
+  <template>
+    <iron-ajax id="ajax"
+      url="http://seerio.us/kdlproxy/products" 
+      on-response="_onResponse"
+      on-error="_onError"
+      ></iron-ajax>
+    <paper-dialog id="dialog" on-iron-overlay-opened="_loadItems" 
+                  on-iron-overlay-closed="_finished" 
+                  entry-animation="scale-up-animation"
+                  exit-animation="fade-out-animation">
+      <h2>Choose products</h2>
+      <template is="dom-repeat" items="{{items}}">
+        <div><paper-checkbox checked="{{item.__choosen__}}">[[item.name]]</paper-checkbox></div>
+      </template>
+      <paper-spinner class="card-spinner" active="{{!loaded}}"></paper-spinner>
+      <div class="buttons">
+        <paper-button dialog-confirm autofocus>Finished</paper-button>
+      </div>
+    </paper-dialog>
+  </template>
+  <script>
+  Polymer({
+    is : "choose-product"
+    ,properties : {
+      url : {
+        type: String
+        ,notify : true
+        ,value : ''
+      }
+      ,as : {
+        type:String
+        ,notify:true
+        ,value:'item'
+      }
+      ,items : {
+        type: Array
+        ,notify: true
+        ,value : function() { return [] }
+      }
+      ,loaded : {
+        type: Boolean
+        ,notify:true
+      }
+    }
+    ,open : function() {
+      this.set('items',[]);
+      this.$.dialog.open();
+    }
+    ,_loadItems : function() {
+      this.set('loaded',false);
+      this.$.ajax.generateRequest();
+    }
+    ,_onResponse : function(e) {
+      this.set('loaded',true);
+      this.set('items', e.detail.response);
+    }
+    ,_onError : function(e) {
+      this.fire('page-error',{ message:'Network problems! Try again later.' })
+      this.$.dialog.close();
+    }
+    ,_finished : function(e) {
+      if(e.detail.confirmed && !e.detail.canceled) {
+        var products = this.items.filter(function(d) { return d.__choosen__ } );
+        if(products.length) {
+          this.fire( 'products-choosen', { products: products } );
+        }
+      }
+    }
+  });
+  </script>
+</dom-module>
+
+
+
+
+
+
+

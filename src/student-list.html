@@ -34,7 +34,7 @@
 
     </style>
     <iron-ajax id="ajax" 
-      url="http://api.kdl.co.il:7999/students" 
+      url="http://seerio.us/kdlproxy/students" 
       last-response="{{students}}"
       last-error="{{error}}"
       on-response="_onResponse"></iron-ajax>
@@ -148,10 +148,10 @@
         var self = this;
         this.students.forEach(function(d,i) { self.set('students.'+i+'._editing',false) })
         this.unshift('students',{ 
-          id:'', 
-          name:'', 
-          email:'',
-          phone:'',
+          //id:'', 
+          //name:'', 
+          //email:'',
+          //phone:'',
           _editing : true ,
           _new : true
         });

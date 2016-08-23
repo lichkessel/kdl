@@ -18,15 +18,8 @@
 
     <iron-ajax id="get"
       url="http://seerio.us/kdlproxy/classes" 
-      on-response="_onGetResponse"
-      on-error="_onGetError"
-      ></iron-ajax>
-
-    <iron-ajax id="put"
-      url="http://seerio.us/kdlproxy/classes" 
-      on-response="_onPostResponse"
-      on-error="_onPostError"
-      method="POST"
+      on-response="_onResponse"
+      on-error="_onError"
       ></iron-ajax>
 
     <template is="dom-repeat" items="{{classes}}" as="item" initial-count="20">
@@ -52,36 +45,25 @@
           ,notify:true
           ,value : []
         }
-        ,title : {
-          type:String
-          ,notify:true
-          ,value:'Classes'
-        }
       }
       ,_addNew : function(e) {
-        this.unshift( 'classes', { _new : true, className:'New!', students:[] } );
-        this.domHost.set( 'classItem', this.classes[0] );
+        this.fire('view-class', { _editing : true, students : [] });
       }
       ,_viewClass : function(e) {
-        this.domHost.set('classItem', e.model.item);
+        e.model.item._editing = false;
+        this.fire('view-class', e.model.item);
       }
-      ,_onPostResponse : function(e) {
-
-      }
-      ,_onPostError : function(e) {
-
-      }
-      ,_onGetResponse : function(e) {
+      ,_onResponse : function(e) {
         this.domHost.set('loaded',true);
         if(!e.detail.response.error) {
           this.set('classes', e.detail.response);
         } else {
-          this.domHost.set('error',e.detail.response.error);
+          this.fire('page-error',{ message: e.detail.response.error } );
         }
       }
-      ,_onGetError : function(e) {
+      ,_onError : function(e) {
         this.domHost.set('loaded',true);
-        this.domHost.set('error','Network problems! Try again later');
+        this.fire('page-error',{ message: 'Network problems! Try again later' } );
       }
       ,load : function() {
         this.$.get.generateRequest();
