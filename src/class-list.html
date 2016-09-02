@@ -12,12 +12,9 @@
 <dom-module id="class-list">
   <template>
     <style include="shared-styles"></style>
-    <style>
-
-    </style>
-
+    <!-- url="http://seerio.us/kdlproxy/classes" --> 
     <iron-ajax id="get"
-      url="http://seerio.us/kdlproxy/classes" 
+      url="https://jsonplaceholder.typicode.com/posts"
       on-response="_onResponse"
       on-error="_onError"
       ></iron-ajax>
@@ -57,6 +54,118 @@
         this.domHost.set('loaded',true);
         if(!e.detail.response.error) {
           this.set('classes', e.detail.response);
+          //TODEL:
+          this.set('classes', [
+          {
+            _id : '1',
+            className : 'First class',
+            students : [
+              {
+                _id : '1',
+                student : {
+                  fullName : 'Mike Johnson akskfksdkfkskdgksdkgk kskkskgksldgklskg klsdklsdkglksdlglskdlgskg klskglskglsklgkslg kslgklskglskdglskflgkflgkldfkg lkgfldfkgldfkgldkfglkdflgkldkglfskglskg lkslkglskglskglskfglsklgkslkglskg lkslgklskglfskglfskglsk lskdglkslgklsgklskglfsgfslgklskg lksglkslkglskglsdkglskglskglskg',
+                  phoneNumber : '+1-800-123-45-67'
+                },
+                products : [
+                  {
+                    _id : '1',
+                    price : '100',
+                    baseProduct : {
+                      _id : '1',
+                      name : 'Super product with long long long name',
+                      price : '200',
+                      billingPeriod : 'monthly'
+                    }
+                  },
+                  {
+                    _id : '1',
+                    price : '100',
+                    baseProduct : {
+                      _id : '1',
+                      name : 'Another product',
+                      price : '300',
+                      billingPeriod : 'monthly'
+                    }
+                  }
+                ]
+              },
+              {
+                _id : '2',
+                student : {
+                  fullName : 'Tomas Jefferson',
+                  phoneNumber : '+1-800-123-45-67'
+                },
+                products : [
+                  {
+                    _id : '1',
+                    price : '100',
+                    baseProduct : {
+                      _id : '1',
+                      name : 'Super product with long long long name',
+                      price : '200',
+                      billingPeriod : 'monthly'
+                    }
+                  },
+                  {
+                    _id : '1',
+                    price : '100',
+                    baseProduct : {
+                      _id : '1',
+                      name : 'Another product',
+                      price : '300',
+                      billingPeriod : 'monthly'
+                    }
+                  }
+                ]
+              }
+            ]
+          },{
+            _id : '2',
+            className : 'Second class',
+            students : [
+              {
+                _id : '1',
+                student : {
+                  fullName : 'Mike Johnson',
+                  phoneNumber : '+1-800-123-45-67'
+                },
+                products : [
+                  {
+                    _id : '1',
+                    price : '100',
+                    baseProduct : {
+                      _id : '1',
+                      name : 'Super product with long long long name',
+                      price : '200',
+                      billingPeriod : 'monthly'
+                    }
+                  },
+                  {
+                    _id : '1',
+                    price : '100',
+                    baseProduct : {
+                      _id : '1',
+                      name : 'Another product',
+                      price : '300',
+                      billingPeriod : 'monthly'
+                    }
+                  }
+                ]
+              }
+            ]
+          },{
+            _id : '3',
+            className : 'General class room',
+            students : []
+          },{
+            _id : '4',
+            className : 'Some class with students',
+            students : []
+          },{
+            _id : '5',
+            className : 'Jericho class ',
+            students : []
+          }])
         } else {
           this.fire('page-error',{ message: e.detail.response.error } );
         }

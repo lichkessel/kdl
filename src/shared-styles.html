@@ -24,12 +24,12 @@
       {
         display:flex;
         flex-direction:column;
-        border-bottom:1px solid var(--app-primary-border-color);
+        border-top:1px solid var(--app-primary-border-color);
         background:white;
       }
-      .list-item[editing] 
-      {
-
+      .list-item:last-child {
+        border-top:none;
+        border-bottom:1px solid var(--app-primary-border-color);
       }
       .list-card 
       {
@@ -42,26 +42,6 @@
         width:100%;
         border-collapse:collapse;
         margin-bottom:56px;
-      }
-      .list-table th
-      {
-        text-align:right;
-        font-size:12px;
-        color:black;
-        opacity:0.54;
-        font-weight:normal;
-        padding:6px;
-        padding-left:24px;
-        padding-right:24px;
-      }
-      .list-table td {
-        font-size:13px;
-        color:black;
-        opacity:0.87;
-        padding:6px;
-        padding-left:24px;
-        padding-right:24px;
-        border-top:1px solid var(--app-secondary-border-color);
       }
 
       .add-button
@@ -78,22 +58,14 @@
       }
       .form-controls
       {
-        text-align:end;
-        border-top:1px solid var(--app-secondary-border-color);
+        display:flex;
+        justify-content:flex-start;
+        /*border-top:1px solid var(--app-secondary-border-color);*/
+        border-top: 1px dashed #ddd;
         padding-top:16px;
         padding-bottom:16px;
-        padding-left:8px;
-        padding-right:8px;
-      }
-      .form-subitems
-      {
-        text-align:end;
-        border-top:1px solid var(--app-secondary-border-color);
-        min-height:36px;
-      }
-      .form-subitems
-      {
-        background-color:var(--app-secondary-border-color);
+        padding-left:0;
+        padding-right:0;
       }
       .form-inputs
       {
@@ -136,20 +108,7 @@
         margin:auto;
         /*border-bottom:1px solid var(--app-secondary-border-color);*/
       }
-      .card-title {
-        display:flex;
-        align-items:center;
-        min-height:70px;
-        padding:10px;
-        padding-right:var(--card-padding);
-      }
-      .card-title-text {
-        flex-grow:0.5;
-      }
-      .card-title-text .text {
-        font-size:150%;
-        flex-grow:1;
-      }
+
       .card-title-text .input {
         flex-grow:1;
       }
@@ -163,8 +122,8 @@
       }
       .card-toggle
       {
-        padding:10px;
-        margin-bottom:-50px;
+        /*padding:10px;
+        margin-bottom:-50px;*/
       }
       .card-form {
         flex-grow:1;
@@ -173,6 +132,7 @@
         font-style:italic;
         text-align:center;
         padding:20px;
+        background-color:var(--app-secondary-border-color);
       }
       [hidden] { display:none !important;}
       [or-hidden-1],
@@ -184,6 +144,136 @@
       {
         display:none !important;
       }
+      .item-table {
+        width:calc(100% - 20px);
+        border-radius:3px;
+        box-shadow:0 0 5px rgba(0,0,0,0.2);
+        margin:10px;
+        margin-bottom:20px;
+        border-collapse:collapse;
+      }
+      .item-table tr:first-child th
+      {
+        padding:6px;
+        padding-left:24px;
+        padding-right:24px;
+        line-height:52px;
+        text-align:right;
+      }
+      .item-table tr:first-child+tr th
+      {
+        text-align:right;
+        font-size:12px;
+        color:rgba(0,0,0,0.54);
+        font-weight:normal;
+        padding:6px;
+        line-height:43px;
+        padding-left:24px;
+        padding-right:24px;
+        border-top:1px solid var(--app-secondary-border-color);
+      }
+      .item-table td {
+        font-size:13px;
+        color:rgba(0,0,0,0.87);
+        padding:6px;
+        line-height:36px;
+        padding-left:24px;
+        padding-right:24px;
+        border-top:1px solid var(--app-secondary-border-color);
+      }
+      .item-table td.action,
+      .item-table th.action
+      {
+        text-align:center;
+        padding:10px !important;
+        width:1px
+      }
+      /* 
+       * 
+       * list styles
+       *
+       */
+    .list-column {
+      display:flex;
+      flex-direction:column;
+    }
+    .title {
+      justify-content:space-between;
+      min-height:70px;
+    }
+    .list-row {
+      display:flex;
+      flex-direction:row;
+    }
+    .control {
+      display:flex;
+      align-items:center;
+    }
+    .static {
+      display:flex;
+      align-items:center;
+    }
+    .static .drop {
+      flex-shrink:0;
+    }
+    expand-button {
+      flex-shrink:0;
+    }
+    .content {
+      padding-left:15px;
+      padding-right:15px;
+    }
+    .text {
+      margin-top:10px;
+      margin-bottom:10px;
+    }
+    .text label {
+      display:block;
+      font-family: 'Roboto', 'Noto', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-size: 12px;
+      font-weight: 400;
+      letter-spacing: 0.011em;
+      line-height: 20px;
+      color:#737373;
+    }
+    .text p {
+      display:block;
+      margin:0;
+      padding: 0;
+      width: 100%;
+      max-width: 100%;
+      background: transparent;
+      border: none;
+      color: #212121;
+      -webkit-appearance: none;
+      text-align: inherit;
+      font-family: 'Roboto', 'Noto', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      font-size: 16px;
+      font-weight: 400;
+      line-height: 24px;
+    }
+    expand-button {
+      margin:auto 0;
+    }
+    .title paper-input {
+      margin:0;
+    }
+    paper-input {
+      margin-top:10px;
+      margin-bottom:10px;
+      display:inline-block;
+    }
+    [viewing] .control .input { display:none; }
+    [editing] .control .text { display:none; }
+    [editing] .edit { display:none }
+    [viewing] .save {display:none}
+    [viewing] .cancel {display: none}
+    [viewing] .drop {display: none}
     </style>
   </template>
 </dom-module>

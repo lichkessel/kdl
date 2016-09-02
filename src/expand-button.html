@@ -1,0 +1,41 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/iron-icons/iron-icons.html">
+
+<dom-module id="expand-button">
+  <template>
+    <paper-icon-button icon$="[[icon(opened)]]" on-tap="_toggle"></paper-icon-button>
+  </template>
+  <script>
+  Polymer({
+    is : "expand-button"
+    ,properties : {
+      opened : {
+        type: Boolean,
+        notify:true,
+        value:false
+      }
+    }
+    ,_toggle : function(exp) {
+      if(this.opened) {
+        this.fire('close',null);
+      }
+      this.set('opened', !this.opened);
+
+    }
+    ,icon : function(exp) {
+      return exp ? 'expand-less' : 'expand-more';
+    }
+    ,ready : function() {
+      this.set('opened', !!this.opened);
+    }
+  });
+  </script>
+</dom-module>
+
+
+
+
+
+
+

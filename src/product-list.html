@@ -10,6 +10,8 @@
 <link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../bower_components/paper-fab/paper-fab.html">
 <link rel="import" href="../bower_components/paper-material/paper-material.html">
+<link rel="import" href="../bower_components/paper-dropdown-menu/paper-dropdown-menu.html">
+<link rel="import" href="../bower_components/paper-listbox/paper-listbox.html">
 
 <link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
 <link rel="import" href="../bower_components/iron-form/iron-form.html">
@@ -19,66 +21,83 @@
 <link rel="import" href="./shared-styles.html">
 <link rel="import" href="./expand-button.html">
 
-<dom-module id="student-list">
+<dom-module id="product-list">
   <template>
     <style include="shared-styles"></style>
-    <!-- url="http://seerio.us/kdlproxy/students"  -->
+
+    <!-- url="http://seerio.us/kdlproxy/products"  -->
     <iron-ajax id="get"
       url="https://jsonplaceholder.typicode.com/posts"
-      on-response="_onGetStudentsResponse"
+      on-response="_onGetProductsResponse"
       on-error="_onGetError"
       ></iron-ajax>
 
     <a id="topfocus"></a>
 
     <paper-material class="card-holder">
-      <template name="student-repeat" is="dom-repeat" items="{{students}}" as="student">
+      <template name="product-repeat" is="dom-repeat" items="{{products}}" as="product">
         <div class="list-item" 
-            key$="[[student._id]]" editing$="[[student._editing]]" viewing$="[[!student._editing]]">
+            key$="[[product._id]]" editing$="[[product._editing]]" viewing$="[[!product._editing]]">
           <form is="iron-form">
             <div class="list-row title content">
               <div class="control" style="flex-grow:1">
                 <div class="text">
-                  <p>[[student.fullName]]</p>
+                  <p>[[product.name]]</p>
                 </div>
-                <paper-input class="input" value="{{student.fullName}}" size="40" required error-message="Required" dir="rtl" disabled="[[!student._editing]]"></paper-input>
+                <paper-input class="input" value="{{product.name}}" size="50" required error-message="Required" dir="rtl"></paper-input>
               </div>
-              <expand-button opened="{{student._expanded}}" on-close="_onCancel"></expand-button>
+              <expand-button opened="{{product._expanded}}" on-close="_onCancel"></expand-button>
             </div>
-            <iron-collapse opened="[[student._expanded]]">
+            <iron-collapse opened="[[product._expanded]]">
               <div class="list-column">
                   <div class="list-column content">
 
                     <div class="control">
                       <div class="text">
-                        <label>Phone</label>
-                        <p>[[student.phoneNumber]]</p>
+                        <label>Price</label>
+                        <p>[[product.price]]</p>
                       </div>
-                      <paper-input class="input" label="Phone" value="{{student.phoneNumber}}" required error-message="Required" dir="rtl" disabled="[[!student._editing]]"></paper-input>
+                      <paper-input class="input" label="Price" value="{{product.price}}" required error-message="Required" dir="rtl"></paper-input>
                     </div>
+
+                    <div class="control">
+                      <div class="text">
+                        <label>Billing period</label>
+                        <p>[[product.billingPeriod]]</p>
+                      </div>
+                      <paper-dropdown-menu class="input" label="Billing period"  value="{{product.billingPeriod}}" required error-message="Required" dir="rtl">
+                        <paper-listbox attr-for-selected="val" selected="[[product.billingPeriod]]" class="dropdown-content">
+                          <paper-item val="weekly">weekly</paper-item>
+                          <paper-item val="monthly">monthly</paper-item>
+                          <paper-item val="quartal">quartal</paper-item>
+                          <paper-item val="year">year</paper-item>
+                        </paper-listbox>
+                      </paper-dropdown-menu>
+                    </div>
+
                   </div>
                 <div class="form-controls">
                   <paper-button class="edit" on-tap="_onEditMode"><iron-icon icon="create"></iron-icon>Edit</paper-button>
                   <paper-button class="save" on-tap="_onSave">Save</paper-button>
-                  <paper-button class="drop" on-tap="_onDropStudent"><iron-icon icon="delete"></iron-icon>Delete</paper-button>
+                  <paper-button class="drop" on-tap="_onDropProduct"><iron-icon icon="delete"></iron-icon>Delete</paper-button>
                 </div>
               </div>
             </iron-collapse>
           </form>
-          <iron-ajax name="createStudent"
+          <iron-ajax name="createProduct"
             url="https://jsonplaceholder.typicode.com/posts/"
             on-response="_onUpdateResponse"
             on-error="_onModifyError"
             method="POST"
             ></iron-ajax>
-          <iron-ajax name="dropStudent"
-            url="https://jsonplaceholder.typicode.com/posts/[[student._id]]"
+          <iron-ajax name="dropProduct"
+            url="https://jsonplaceholder.typicode.com/posts/[[product._id]]"
             on-response="_onDropResponse"
             on-error="_onModifyError"
             method="DELETE"
             ></iron-ajax>
-          <iron-ajax name="updateStudent"
-            url="https://jsonplaceholder.typicode.com/posts/[[student._id]]"
+          <iron-ajax name="updateProduct"
+            url="https://jsonplaceholder.typicode.com/posts/[[product._id]]"
             on-response="_onUpdateResponse"
             on-error="_onModifyError"
             method="PUT"
@@ -94,9 +113,9 @@
   </template>
   <script>
     Polymer({
-      is: 'student-list',
+      is: 'product-list',
       properties : {
-        students : {
+        products : {
           type: Array,
           notify: true,
           value : []
@@ -112,39 +131,43 @@
        *  Server responses
        *
        */
+      ,test : function(e) {
+        console.log(e);
+       }
       ,_onUpdateResponse : function(e) {
         if(!e.detail.response.message) {
           var c = e.detail.response;
-          e.model.set('student._id',c._id);
+          e.model.set('product._id',c._id);
           //TODEL:
-          e.model.set('student._id','111');
+          e.model.set('product._id','111');
         } else {
-          e.model.set('student._editing',true);
+          e.model.set('product._editing',true);
           this.fire('page-error',{ message: e.detail.response.message } );
         }
       }
       ,_onDropResponse : function(e) {
         if(!e.detail.response.message) {
-          this.arrayDelete('students',e.model.student);
+          this.arrayDelete('products',e.model.product);
         } else {
-          e.model.set('student._editing',true);
+          e.model.set('product._editing',true);
           this.fire('page-error',{ message: e.detail.response.message } );
         }
       }
-      ,_onGetStudentsResponse : function(e) {
+      ,_onGetProductsResponse : function(e) {
         this.domHost.set('loaded',true);
         if(!e.detail.response.message) {
           //TODEL:
           e.detail.response.forEach(function(x,i) { 
             x._id = ''+(1+i); 
-            x.fullName = 'John Pearpeach'; 
-            x.phoneNumber = '+1-800-123-01-21';
+            x.name = 'Kfar Yehezkel 2 Times a week'; 
+            x.price = '1000';
+            x.billingPeriod = 'monthly';
           });
 
           e.detail.response.forEach(function(x) { 
             x._editing = false ; 
           });
-          this.set('students', e.detail.response);
+          this.set('products', e.detail.response);
         } else {
           this.fire('page-error',{ message: e.detail.response.message } );
         }
@@ -153,25 +176,25 @@
         this.fire('page-error',{ message: 'Network problems! Try again later' } );
       }
       ,_onModifyError : function(e) {
-        e.model.set('student._editing',true);
-        this.fire('page-error',{ message: "Server can't modifify this student" } );
+        e.model.set('product._editing',true);
+        this.fire('page-error',{ message: "Server can't modifify this product" } );
       }
       /*
        *
        *  Commands execution
        *
        */
-      ,_onDropStudent : function(e) {
-         //drop student
-        if(e.model.student._id === undefined) {
-          this.arrayDelete('students',e.model.student);
+      ,_onDropProduct : function(e) {
+         //drop product
+        if(e.model.product._id === undefined) {
+          this.arrayDelete('products',e.model.product);
         } else {
           var self = this;
           this.fire('confirm',{ 
-            text: 'Do you really want to delete this student?', 
+            text: 'Do you really want to delete this product?', 
             ok : function() {
-              console.log('drop student');
-              var ajax = self.$$('.list-item[key="'+e.model.student._id+'"] [name="dropStudent"]');
+              console.log('drop product');
+              var ajax = self.$$('.list-item[key="'+e.model.product._id+'"] [name="dropProduct"]');
               ajax.body = '';
               ajax.generateRequest();
             } 
@@ -179,30 +202,30 @@
         }
       }
       ,_onEditMode : function(e) {
-        e.model._originalStudentItem_ = JSON.parse(JSON.stringify(e.model.student));
-        e.model.set('student._editing',true);
+        e.model._originalProductItem_ = JSON.parse(JSON.stringify(e.model.product));
+        e.model.set('product._editing',true);
       }
       ,_onSave : function(e) {
         var model = e.model;
-        var student = e.model.student;
-        var item = this.$$('.list-item[key="'+student._id+'"]');
-        model.set('student._editing', false);
-        if(student._id === undefined) {
-          //create student
-          console.log('create student');
-          var ajax = item.querySelector('[name="addStudent"]');
+        var product = e.model.product;
+        var item = this.$$('.list-item[key="'+product._id+'"]');
+        model.set('product._editing', false);
+        if(product._id === undefined) {
+          //create product
+          console.log('create product');
+          var ajax = item.querySelector('[name="addProduct"]');
           ajax.body = JSON.stringify({
-                fullName :  student.fullName,
-                phoneNumber : student.phoneNumber
+                fullName :  product.fullName,
+                phoneNumber : product.phoneNumber
               });
           ajax.generateRequest();          
-        } else if(student._id !== undefined) {
-          //update student
-          console.log('update student');
-          var ajax = item.querySelector('[name="updateStudent"]');
+        } else if(product._id !== undefined) {
+          //update product
+          console.log('update product');
+          var ajax = item.querySelector('[name="updateProduct"]');
           ajax.body = JSON.stringify({
-                fullName :  student.fullName,
-                phoneNumber : student.phoneNumber
+                fullName :  product.fullName,
+                phoneNumber : product.phoneNumber
               });
           ajax.generateRequest();
         } else {
@@ -211,16 +234,16 @@
         }
       }
       ,_onCancel : function(e) {
-        console.log('cancel student');
-        if(e.model.student._id === undefined) {
-          this.arrayDelete('students',e.model.student);
+        console.log('cancel product');
+        if(e.model.product._id === undefined) {
+          this.arrayDelete('products',e.model.product);
         } else {
-          for(var i in e.model._originalStudentItem_) {
-            e.model.set('student.'+i,e.model._originalStudentItem_[i]);
+          for(var i in e.model._originalProductItem_) {
+            e.model.set('product.'+i,e.model._originalProductItem_[i]);
           }
-          e.model.set('student._editing', false);
+          e.model.set('product._editing', false);
         }
-        delete this._originalStudentItem_;
+        delete this._originalProductItem_;
       }
       ,load : function() {
         this.$.get.generateRequest();

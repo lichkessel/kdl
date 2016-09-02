@@ -28,6 +28,7 @@
 <link rel="import" href="./class-list.html">
 <link rel="import" href="./class-detail.html">
 <link rel="import" href="./student-list.html">
+<link rel="import" href="./product-list.html">
 <link rel="import" href="./confirm-dialog.html">
 <link rel="import" href="./choose-student.html">
 <link rel="import" href="./choose-product.html">
@@ -91,6 +92,7 @@
         <paper-listbox attr-for-selected="id" selected="{{page}}" on-iron-activate="_reload">
           <paper-item id="class-list">Classes</paper-item>
           <paper-item id="student-list">Students</paper-item>
+          <paper-item id="product-list">Products</paper-item>
         </paper-listbox>
       </app-drawer>
       <app-header-layout>
@@ -103,7 +105,7 @@
           </app-toolbar>
           <app-toolbar class="tall">
             <h1 main-title>[[title]]</h1>
-          </app-toolbar>        
+          </app-toolbar>   
         </app-header>
         <iron-pages selected="{{page}}" attr-for-selected="name">
           <iron-pages name="class-list" selected="{{subpage}}" attr-for-selected="name">
@@ -111,7 +113,7 @@
             <class-detail name="class-detail" class-item="{{classItem}}" title="Class detail"></class-detail>
           </iron-pages>
           <student-list name="student-list" title="Students"></student-list>
-          <price-list name="price-list"></price-list>
+          <product-list name="product-list" title="Products"></product-list>
         </iron-pages>
         <paper-spinner class="page-spinner" active="{{!loaded}}"></paper-spinner>
         <paper-toast id="toast" horizontal-align="right"></paper-toast>
@@ -179,9 +181,7 @@
       }
       ,_onConfirm : function(e) {
         var dialog = this.$.confirmDialog;
-        dialog.eventName = e.detail.eventName;
-        dialog.text = e.detail.text;
-        dialog.target = e.detail.target;
+        dialog.detail = e.detail;
         dialog.open();
       }
       ,_onViewClass : function(e) {

@@ -15,6 +15,7 @@
 <link rel="import" href="../bower_components/paper-card/paper-card.html">
 <link rel="import" href="../bower_components/paper-input/paper-input.html">
 
+<link rel="import" href="./expand-button.html">
 <link rel="import" href="./owed-list.html">
 
 <dom-module id="class-detail">
@@ -24,58 +25,25 @@
     .product-name {
       padding:10px;
     }
-    .card-line {
-      display:flex;
-      flex-direction:column;
-      flex-grow:1;
-      justify-content:flex-end;
-    }
-    .card-line-head {
-      display:flex;
-    }
-    .card-line-body {
-      flex-grow:1;
-      display:flex;
-      align-items:center;
-      /*justify-content:space-around;*/
-      flex-wrap:wrap;
-    }
-    .card-text-button {
-      text-align:end;
-      white-space: nowrap;
-      margin:auto;
-      flex-grow:1;
-    }
-    .product-chip {
-      white-space:nowrap;
-      flex-grow:0;
-      display:inline-flex;
-      padding-left:20px;
-      padding-right:20px;
-      padding-top:5px;
-      padding-bottom: 5px;
-      color:#555;
-      background:rgba(0,0,0,0.05);
-      border-radius:40px;
-      border:none;
-      align-items:center;
-      margin:5px;
-    }
+
     </style>
 
-    <form id="form" is="iron-form">
+    <form id="form" is="iron-form" editing$="[[classItem._editing]]" viewing$="[[!classItem._editing]]">
       <div class="card-holder">
-        <div class="card-title">
-          <div class="card-title-text">
-            <div class="text" hidden$="[[editing]]">[[classItem.className]]</div>
-            <div class="input" hidden$="[[viewing]]"><paper-input name="name" label="Class name" value="{{classItem.className}}" required error-message="Required" dir="rtl"></paper-input></div>
+        <div class="list-column">
+          <div class="control content">
+            <div class="text" style="font-size:150%">[[classItem.className]]</div>
+            <div class="input"><paper-input name="name" label="Class name" value="{{classItem.className}}" required error-message="Required" dir="rtl"></paper-input></div>
           </div>
-          <div></div>
-          <div class="card-title-buttons">
-            <paper-button hidden$="[[editing]]" on-tap="_editMode"><iron-icon icon="create"></iron-icon>Edit</paper-button>
+          <div class="form-controls">
+            <paper-button class="edit" on-tap="_editMode"><iron-icon icon="create"></iron-icon>Edit</paper-button>
+            <paper-button class="cancel" on-tap="_onCancel">Cancel</paper-button>
+            <paper-button class="save" on-tap="_onSave">Save</paper-button>
+            <paper-button class="drop" on-tap="_dropClass"><iron-icon icon="delete"></iron-icon>Delete</paper-button>
+          </div>
+          <!--div class="card-title-buttons">
             <paper-button hidden$="[[viewing]]" on-tap="_addStudent"><iron-icon icon="add"></iron-icon>Add students</paper-button>
-            <paper-button hidden$="[[viewing]]" on-tap="_dropClass"><iron-icon icon="delete"></iron-icon>Delete</paper-button>
-          </div>
+          </div-->
         </div>
         <div class="form-subitems">
           <div class="no-items" hidden$="[[hasStudents]]">No students attached</div>
@@ -84,48 +52,55 @@
             <div class="list-item student" hidden$="[[student._deleted_]]" 
                  key$="[[student._id]]" deleted$="[[student._deleted_]]">
 
-              <div class="card-line">
-                <div class="card-line-head">
-                  <div class="card-text">[[student.student.fullName]] - id:[[student._id]]</div>
-                  <div class="card-text-button" hidden$="[[viewing]]">
-                    <paper-icon-button icon="add" on-tap="_addProduct"></paper-icon-button>
-                    <paper-icon-button icon="delete" on-tap="_dropStudent"></paper-icon-button>
-                  </div>
-                  <div class="card-toggle">
-                    <paper-icon-button class="expand-card" icon$="[[iconToggle(student._expanded)]]" on-tap="_toggleStudent"></paper-icon-button>
-                  </div>
+              <div>
+                <div class="list-row title content">
+                  <div class="static text"><paper-icon-button class="drop" icon="remove-circle" on-tap="_dropStudent"></paper-icon-button>[[student.student.fullName]] - id:[[student._id]]</div>
+                  <expand-button opened="{{student._expanded}}"></expand-button>
                 </div>
                 <iron-collapse class="card-line-body" opened="[[student._expanded]]">
                     
-                    <template name="product-repeat" is="dom-repeat" items="{{student.products}}" as="product">
-                      <div class="product-chip product" key$="[[product._id]]" deleted$="[[product._deleted_]]" hidden$="[[product._deleted_]]">
-                        <div>
-                          <paper-icon-button icon="cancel" hidden$="[[viewing]]" on-tap="_dropProduct"></paper-icon-button>
-                        </div>
-                        <div class="product-name">[[product.baseProduct.name]] - id:[[product._id]]</div>
-                        <div style="margin-right:20px">
-                          <div class="text" hidden$="[[editing]]">price: [[product.price]]</div>
-                          <div class="input" hidden$="[[viewing]]"><paper-input name="product-price" label="Price" value="{{product.price}}" placeholder="Base [[product.baseProduct.price]]" type=number required error-message="Required" dir="rtl"></paper-input></div>
-                        </div>
-                        <iron-ajax name="addProduct"
-                          url="http://seerio.us/kdlproxy/classes/students/products/[[classItem._id]]/[[student._id]]" 
-                          on-response="_onAddProductResponse"
-                          on-error="_onError"
-                          loading="{{loading}}"
-                          method="POST"
-                          content-type="application/json"
-                          ></iron-ajax>
-                        <iron-ajax name="dropProduct"
-                          url="http://seerio.us/kdlproxy/classes/students/products/[[classItem._id]]/[[student._id]]/[[product._id]]" 
-                          on-response="_onDropProductResponse"
-                          on-error="_onError"
-                          loading="{{loading}}"
-                          method="DELETE"
-                          content-type="application/json"
-                          ></iron-ajax>
-                      </div>
-                    </template>
-                  
+                    <table class="item-table">
+                      <thead>
+                        <tr>
+                          <th class="action">
+                            <paper-icon-button icon="add" on-tap="_addProduct"></paper-icon-button>
+                          </th>
+                          <th colspan=2>Products</th>
+                        </tr>
+                        <tr hidden$="[[!hasProducts(student.products.*)]]"><th></th><th>Name</th><th>Price</th></tr>
+                      </thead>
+                      <tbody>
+                          <!--tr hidden$="[[hasProducts(student.products.*)]]"><td colspan=100 class="no-items">No products selected</td></tr-->
+                        <template name="product-repeat" is="dom-repeat" items="{{student.products}}" as="product">
+                          <tr class="product" key$="[[product._id]]" deleted$="[[product._deleted_]]" hidden$="[[product._deleted_]]">
+                            <td class="action">
+                              <paper-icon-button icon="remove-circle-outline" class="drop" on-tap="_dropProduct"></paper-icon-button>
+                              <iron-ajax name="addProduct"
+                              url="http://seerio.us/kdlproxy/classes/students/products/[[classItem._id]]/[[student._id]]" 
+                              on-response="_onAddProductResponse"
+                              on-error="_onError"
+                              method="POST"
+                              content-type="application/json"
+                              ></iron-ajax>
+                            <iron-ajax name="dropProduct"
+                              url="http://seerio.us/kdlproxy/classes/students/products/[[classItem._id]]/[[student._id]]/[[product._id]]" 
+                              on-response="_onDropProductResponse"
+                              on-error="_onError"
+                              method="DELETE"
+                              content-type="application/json"
+                              ></iron-ajax>
+                            </td>
+                            <td class="product-name">[[product.baseProduct.name]] - id:[[product._id]]</td>
+                            <td class="control">
+                              <div class="text">[[product.price]]</div>
+                              <div class="input">
+                                <paper-input name="product-price" value="{{product.price}}" placeholder="Base [[product.baseProduct.price]]" disabled$="[[product._deleted_]]" type=number required error-message="Required" dir="rtl"></paper-input>
+                              </div>
+                            </td>
+                          </tr>
+                        </template>
+                      </tbody>
+                    </table>
                 </iron-collapse>
                 <!--paper-spinner class="toggle-spinner" active or-hidden-1$="[[!student._expanded]]" or-hidden-2$="[[student._ready]]"></paper-spinner-->
                 
@@ -141,7 +116,6 @@
                 url="http://seerio.us/kdlproxy/classes/students/[[classItem._id]]" 
                 on-response="_onAddStudentResponse"
                 on-error="_onError"
-                loading="{{loading}}"
                 method="POST"
                 content-type="application/json"
                 ></iron-ajax>
@@ -149,19 +123,16 @@
                 url="http://seerio.us/kdlproxy/classes/students/[[classItem._id]]/[[student._id]]" 
                 on-response="_onDropStudentResponse"
                 on-error="_onError"
-                loading="{{loading}}"
                 method="DELETE"
                 content-type="application/json"
                 ></iron-ajax>
             </div>
           </template>
         </div>
-        <div class="form-controls" hidden$="[[viewing]]">
-          <paper-button class="save" on-tap="_onSave">
-            <div hidden$="{{classItem._sending}}">Save</div>
-            <div hidden$="{{!classItem._sending}}">Saving</div>
-          </paper-button>
-          <paper-button class="cancel" on-tap="_onCancel">Cancel</paper-button>
+      </div>
+      <div class="add-button">
+        <div>
+          <paper-fab icon="add" on-tap="_addStudent"></paper-fab>
         </div>
       </div>
     </form>
@@ -169,7 +140,6 @@
       url="http://seerio.us/kdlproxy/classes/"
       on-response="_onCreateClassResponse"
       on-error="_onError"
-      loading="{{loading}}"
       method="POST"
       content-type="application/json"
       ></iron-ajax>
@@ -177,7 +147,6 @@
       url="http://seerio.us/kdlproxy/classes/[[classItem._id]]" 
       on-response="_onUpdateClassResponse"
       on-error="_onError"
-      loading="{{loading}}"
       method="PUT"
       content-type="application/json"
       ></iron-ajax>
@@ -185,7 +154,6 @@
       url="http://seerio.us/kdlproxy/classes/[[classItem._id]]"
       on-response="_onDropClassResponse"
       on-error="_onError"
-      loading="{{loading}}"
       method="DELETE"
       content-type="application/json"
       ></iron-ajax>
@@ -203,33 +171,16 @@
           type: Boolean
           ,computed:'_computeHasStudents(classItem.students.*)'
         }
-        ,editing : {
-          type: Boolean
-          ,computed : '_computeEditing(classItem._editing,loading)'
-        }
-        ,viewing : {
-          type: Boolean
-          ,computed : '_computeViewing(classItem._editing,loading)'
-        }
-        ,loading : {
-          type : Boolean
-          ,notify : true
-          ,value: false
-        }
       }
       ,listeners : {
         'students-added' : '_onStudentsAdded'
         ,'products-added' : '_onProductsAdded'
-        ,'drop-class-ok' : '_onDropClassOk'
       }
       ,_computeHasStudents : function(x) {
         return !!this.classItem.students.filter(function(x) { return !x._deleted_ }).length;
       }
-      ,_computeEditing : function(_editing,loading) {
-        return _editing || loading;
-      }
-      ,_computeViewing : function(_editing,loading) {
-        return !_editing && !loading;
+      ,hasProducts : function(e) {
+        return !!e.base.filter(function(x) { return !x._deleted_ }).length;
       }
       ,_editMode : function() {
         this._originalClassItem_ = JSON.parse(JSON.stringify(this.classItem));
@@ -239,12 +190,15 @@
         if(this.classItem._id == undefined) {
           this.domHost.load('class-list');
         } else {
-          this.fire('confirm',{ eventName:'drop-class-ok', target: this, text: 'Do you really want to delete this class?' }); 
+          var self = this;
+          this.fire('confirm',{ 
+            text: 'Do you really want to delete this class?', 
+            ok : function() {
+              self.$.dropClass.body = '';
+              self.$.dropClass.generateRequest();
+            } 
+          }); 
         }
-      }
-      ,_onDropClassOk : function() {
-        this.$.dropClass.body = '';
-        this.$.dropClass.generateRequest();
       }
       ,_addStudent : function() {
         this.domHost.$.studentlist.open();
@@ -271,33 +225,39 @@
           }
           return true;
         });
-        for(var i=0;i<choosen.length;++i) {
-          this.push('classItem.students', { 
-            student: choosen[i]
-            ,_expanded : false
-            ,_deleted_ : false
-            ,products: []
-          });
+        if(choosen.length) {
+          for(var i=0;i<choosen.length;++i) {
+            this.push('classItem.students', { 
+              student: choosen[i]
+              ,_expanded : false
+              ,_deleted_ : false
+              ,products: []
+            });
+          }
+          this.set('classItem._editing',true);
         }
       }
       ,_onProductsAdded : function(e) {
         var model = this._currentStudentModel_;
         var products = model.student.products;
-        var choosen = e.detail.products.filter(function(p) {
+        var choosen = e.detail.products/*.filter(function(p) {
           for(var i=0;i<products.length;++i) {
             if(products[i].baseProduct._id===p._id  && !products[i]._deleted_)
               return false
           }
           return true;
-        });
-        for(var i=0;i<choosen.length;++i) {
-          model.push('student.products', { 
-            baseProduct: choosen[i]
-            ,price:''
-          });
+        });*/
+        if(choosen.length) {
+          for(var i=0;i<choosen.length;++i) {
+            model.push('student.products', { 
+              baseProduct: choosen[i]
+              ,price:''
+            });
+          }
+          model.dataHost.render();
+          model.set('student._expanded',true);
+          this.set('classItem._editing',true);
         }
-        model.dataHost.render();
-        model.set('student._expanded',true);
         delete this._currentStudentModel_;
       }
       ,_onSave : function() {
@@ -316,9 +276,6 @@
       ,iconToggle : function(exp) {
         return exp ? 'expand-less' : 'expand-more';
       }
-      /*,_toggleOwed : function(e) {
-        e.model.set('student._expanded', !e.model.student.expanded);
-      }*/
       ,_toggleStudent : function(e) {
         e.model.set('student._expanded', !e.model.student._expanded);
         //e.model.set('student._ready', false);
@@ -441,7 +398,7 @@
           var studentHost = this.$$('[name="student-repeat"]');
 
           //add students
-          [].forEach.call(root.querySelectorAll('.student:not([key]):not([deleted])>[name="addStudent"]'),
+          [].forEach.call(root.querySelectorAll('.student:not([key]):not([deleted]) [name="addStudent"]'),
           function(ajax) {
               var student = studentHost.modelForElement(ajax).student;
               ajax.body = JSON.stringify({
@@ -457,7 +414,7 @@
           });
 
           //drop students
-          [].forEach.call(root.querySelectorAll('.student[key][deleted]>[name="dropStudent"]'),
+          [].forEach.call(root.querySelectorAll('.student[key][deleted] [name="dropStudent"]'),
           function(ajax) {
             ajax.body = '';
             ajax.generateRequest();
@@ -475,10 +432,11 @@
           function(subRoot) {
             var studentModel = studentHost.modelForElement(subRoot);
             var productHost = subRoot.querySelector( '[name="product-repeat"]');
-            
+
             //create products
-            [].forEach.call(subRoot.querySelectorAll('.product:not([key]):not([deleted])>[name="addProduct"]'),
+            [].forEach.call(subRoot.querySelectorAll('.product:not([key]):not([deleted]) [name="addProduct"]'),
             function(ajax){
+              console.log('add product');
               var product = productHost.modelForElement(ajax).product;
               ajax.studentModel = studentModel;
               ajax.body = JSON.stringify({
@@ -489,8 +447,9 @@
             });
 
             //drop products
-            [].forEach.call(subRoot.querySelectorAll('.product[key][deleted]>[name="dropProduct"]'),
+            [].forEach.call(subRoot.querySelectorAll('.product[key][deleted] [name="dropProduct"]'),
             function(ajax) {
+              console.log('drop product');
               ajax.studentModel = studentModel;
               ajax.body = '';
               ajax.generateRequest();

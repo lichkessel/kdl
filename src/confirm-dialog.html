@@ -13,7 +13,7 @@
                   on-iron-overlay-closed="_finished" 
                   entry-animation="scale-up-animation"
                   exit-animation="fade-out-animation" modal>
-      <div>[[text]]</div>
+      <div>[[detail.text]]</div>
       <div class="buttons">
         <paper-button dialog-confirm>Yes</paper-button>
         <paper-button dialog-dismiss autofocus>No</paper-button>
@@ -24,19 +24,16 @@
   Polymer({
     is : "confirm-dialog"
     ,properties : {
-      text : {
-        type: String
+      detail : {
+        type: Object
         ,notify : true
-        ,value : ''
-      },
-      eventName : {
-        type : String
-        ,notify : true
-        ,value : 'confirm-dialog-ok'
-      },
-      target : {
-        type : Object,
-        notify: true
+        ,value : function() {
+          return {
+            text : '',
+            eventName : 'confirm-dialog-ok',
+            target : null
+          }
+        }
       }
     }
     ,open : function() {
@@ -44,7 +41,7 @@
     }
     ,_finished : function(e) {
       if(e.detail.confirmed && !e.detail.canceled) {
-        this.fire(this.eventName, null, { node: this.target, bubbles: false });
+        this.detail.ok();
       }
     }
   });
