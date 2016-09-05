@@ -65,9 +65,9 @@
                           <th class="action">
                             <paper-icon-button icon="add" on-tap="_addProduct"></paper-icon-button>
                           </th>
-                          <th colspan=3>Products</th>
+                          <th colspan=2>Products</th>
                         </tr>
-                        <tr hidden$="[[!hasProducts(student.products.*)]]"><th></th><th>Name</th><th>Price</th><th>Billing period</th></tr>
+                        <tr hidden$="[[!hasProducts(student.products.*)]]"><th></th><th>Name</th><th>Price</th><!--th>Billing period</th--></tr>
                       </thead>
                       <tbody>
                           <!--tr hidden$="[[hasProducts(student.products.*)]]"><td colspan=100 class="no-items">No products selected</td></tr-->
@@ -97,9 +97,9 @@
                                 <paper-input name="product-price" value="{{product.price}}" placeholder="Base [[product.baseProduct.price]]" disabled$="[[product._deleted_]]" type=number required error-message="Required" dir="rtl"></paper-input>
                               </div>
                             </td>
-                            <td>
+                            <!--td>
                               <div class="text">[[product.baseProduct.billingPeriod]]</div>
-                            </td>
+                            </td-->
                           </tr>
                         </template>
                       </tbody>
