@@ -12,9 +12,9 @@
 <dom-module id="class-list">
   <template>
     <style include="shared-styles"></style>
-    <!-- url="http://seerio.us/kdlproxy/classes" --> 
+    <!-- url="https://jsonplaceholder.typicode.com/posts" --> 
     <iron-ajax id="get"
-      url="https://jsonplaceholder.typicode.com/posts"
+      url="http://seerio.us/kdlproxy/classes"
       on-response="_onResponse"
       on-error="_onError"
       ></iron-ajax>
@@ -55,6 +55,7 @@
         if(!e.detail.response.error) {
           this.set('classes', e.detail.response);
           //TODEL:
+          /*
           this.set('classes', [
           {
             _id : '1',
@@ -165,7 +166,7 @@
             _id : '5',
             className : 'Jericho class ',
             students : []
-          }])
+          }])*/
         } else {
           this.fire('page-error',{ message: e.detail.response.error } );
         }

@@ -22,11 +22,12 @@
 <dom-module id="student-list">
   <template>
     <style include="shared-styles"></style>
-    <!-- url="http://seerio.us/kdlproxy/students"  -->
+    <!-- url="https://jsonplaceholder.typicode.com/posts"  -->
     <iron-ajax id="get"
-      url="https://jsonplaceholder.typicode.com/posts"
+      url="http://seerio.us/kdlproxy/students"
       on-response="_onGetStudentsResponse"
-      on-error="_onGetError"
+      on-error="_onError"
+      content-type="application/json"
       ></iron-ajax>
 
     <a id="topfocus"></a>
@@ -41,7 +42,7 @@
                 <div class="text">
                   <p>[[student.fullName]]</p>
                 </div>
-                <paper-input class="input" value="{{student.fullName}}" size="40" required error-message="Required" dir="rtl" disabled="[[!student._editing]]"></paper-input>
+                <paper-input class="input" value="{{student.fullName}}" label="Full name" size="40" required error-message="Required" dir="rtl" disabled="[[!student._editing]]"></paper-input>
               </div>
               <expand-button opened="{{student._expanded}}" on-close="_onCancel"></expand-button>
             </div>
@@ -61,34 +62,37 @@
                   <paper-button class="edit" on-tap="_onEditMode"><iron-icon icon="create"></iron-icon>Edit</paper-button>
                   <paper-button class="save" on-tap="_onSave">Save</paper-button>
                   <paper-button class="drop" on-tap="_onDropStudent"><iron-icon icon="delete"></iron-icon>Delete</paper-button>
+                  <iron-ajax name="createStudent"
+                    url="http://seerio.us/kdlproxy/students"
+                    on-response="_onUpdateResponse"
+                    on-error="_onError"
+                    content-type="application/json"
+                    method="POST"
+                    ></iron-ajax>
+                  <iron-ajax name="dropStudent"
+                    url="http://seerio.us/kdlproxy/students/[[student._id]]"
+                    on-response="_onDropResponse"
+                    on-error="_onModifyError"
+                    content-type="application/json"
+                    method="DELETE"
+                    ></iron-ajax>
+                  <iron-ajax name="updateStudent"
+                    url="http://seerio.us/kdlproxy/students/[[student._id]]"
+                    on-response="_onUpdateResponse"
+                    on-error="_onModifyError"
+                    content-type="application/json"
+                    method="PUT"
+                    ></iron-ajax>
                 </div>
               </div>
             </iron-collapse>
           </form>
-          <iron-ajax name="createStudent"
-            url="https://jsonplaceholder.typicode.com/posts/"
-            on-response="_onUpdateResponse"
-            on-error="_onModifyError"
-            method="POST"
-            ></iron-ajax>
-          <iron-ajax name="dropStudent"
-            url="https://jsonplaceholder.typicode.com/posts/[[student._id]]"
-            on-response="_onDropResponse"
-            on-error="_onModifyError"
-            method="DELETE"
-            ></iron-ajax>
-          <iron-ajax name="updateStudent"
-            url="https://jsonplaceholder.typicode.com/posts/[[student._id]]"
-            on-response="_onUpdateResponse"
-            on-error="_onModifyError"
-            method="PUT"
-            ></iron-ajax>
         </div>
       </template>
     </paper-material>
     <div class="add-button">
         <div>
-          <paper-fab icon="add" on-tap="_addNew"></paper-fab>
+          <paper-fab icon="add" on-tap="_onAddNew"></paper-fab>
         </div>
     </div>
   </template>
@@ -117,7 +121,7 @@
           var c = e.detail.response;
           e.model.set('student._id',c._id);
           //TODEL:
-          e.model.set('student._id','111');
+          //e.model.set('student._id','111');
         } else {
           e.model.set('student._editing',true);
           this.fire('page-error',{ message: e.detail.response.message } );
@@ -135,11 +139,11 @@
         this.domHost.set('loaded',true);
         if(!e.detail.response.message) {
           //TODEL:
-          e.detail.response.forEach(function(x,i) { 
+          /*e.detail.response.forEach(function(x,i) { 
             x._id = ''+(1+i); 
             x.fullName = 'John Pearpeach'; 
             x.phoneNumber = '+1-800-123-01-21';
-          });
+          });*/
 
           e.detail.response.forEach(function(x) { 
             x._editing = false ; 
@@ -149,7 +153,7 @@
           this.fire('page-error',{ message: e.detail.response.message } );
         }
       }
-      ,_onGetError : function(e) {
+      ,_onError : function(e) {
         this.fire('page-error',{ message: 'Network problems! Try again later' } );
       }
       ,_onModifyError : function(e) {
@@ -161,6 +165,12 @@
        *  Commands execution
        *
        */
+      ,_onAddNew : function() {
+        this.unshift('students',{
+          _editing : true,
+          _expanded : true
+        })
+      }
       ,_onDropStudent : function(e) {
          //drop student
         if(e.model.student._id === undefined) {
@@ -185,12 +195,11 @@
       ,_onSave : function(e) {
         var model = e.model;
         var student = e.model.student;
-        var item = this.$$('.list-item[key="'+student._id+'"]');
         model.set('student._editing', false);
         if(student._id === undefined) {
           //create student
           console.log('create student');
-          var ajax = item.querySelector('[name="addStudent"]');
+          var ajax = e.target.parentNode.querySelector('[name="createStudent"]');
           ajax.body = JSON.stringify({
                 fullName :  student.fullName,
                 phoneNumber : student.phoneNumber
@@ -199,7 +208,7 @@
         } else if(student._id !== undefined) {
           //update student
           console.log('update student');
-          var ajax = item.querySelector('[name="updateStudent"]');
+          var ajax = this.$$('.list-item[key="'+student._id+'"] [name="updateStudent"]');
           ajax.body = JSON.stringify({
                 fullName :  student.fullName,
                 phoneNumber : student.phoneNumber

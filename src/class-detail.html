@@ -54,7 +54,7 @@
 
               <div>
                 <div class="list-row title content">
-                  <div class="static text"><paper-icon-button class="drop" icon="remove-circle" on-tap="_dropStudent"></paper-icon-button>[[student.student.fullName]] - id:[[student._id]]</div>
+                  <div class="static text"><paper-icon-button class="drop" icon="remove-circle" on-tap="_dropStudent"></paper-icon-button>[[student.student.fullName]]</div>
                   <expand-button opened="{{student._expanded}}"></expand-button>
                 </div>
                 <iron-collapse class="card-line-body" opened="[[student._expanded]]">
@@ -65,9 +65,9 @@
                           <th class="action">
                             <paper-icon-button icon="add" on-tap="_addProduct"></paper-icon-button>
                           </th>
-                          <th colspan=2>Products</th>
+                          <th colspan=3>Products</th>
                         </tr>
-                        <tr hidden$="[[!hasProducts(student.products.*)]]"><th></th><th>Name</th><th>Price</th></tr>
+                        <tr hidden$="[[!hasProducts(student.products.*)]]"><th></th><th>Name</th><th>Price</th><th>Billing period</th></tr>
                       </thead>
                       <tbody>
                           <!--tr hidden$="[[hasProducts(student.products.*)]]"><td colspan=100 class="no-items">No products selected</td></tr-->
@@ -90,12 +90,15 @@
                               content-type="application/json"
                               ></iron-ajax>
                             </td>
-                            <td class="product-name">[[product.baseProduct.name]] - id:[[product._id]]</td>
+                            <td class="product-name">[[product.baseProduct.name]]</td>
                             <td class="control">
                               <div class="text">[[product.price]]</div>
                               <div class="input">
                                 <paper-input name="product-price" value="{{product.price}}" placeholder="Base [[product.baseProduct.price]]" disabled$="[[product._deleted_]]" type=number required error-message="Required" dir="rtl"></paper-input>
                               </div>
+                            </td>
+                            <td>
+                              <div class="text">[[product.baseProduct.billingPeriod]]</div>
                             </td>
                           </tr>
                         </template>
@@ -234,7 +237,7 @@
               ,products: []
             });
           }
-          this.set('classItem._editing',true);
+          this._editMode();
         }
       }
       ,_onProductsAdded : function(e) {
@@ -256,7 +259,7 @@
           }
           model.dataHost.render();
           model.set('student._expanded',true);
-          this.set('classItem._editing',true);
+          this._editMode();
         }
         delete this._currentStudentModel_;
       }
