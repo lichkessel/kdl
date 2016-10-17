@@ -80,7 +80,7 @@
                 <div class="form-controls">
                   <paper-button class="edit" on-tap="_onEditMode"><iron-icon icon="create"></iron-icon>Edit</paper-button>
                   <paper-button class="save" on-tap="_onSave">Save</paper-button>
-                  <paper-button class="drop" on-tap="_onDropProduct"><iron-icon icon="delete"></iron-icon>Delete</paper-button>
+                  <paper-button class="drop" hidden$="[[isNew(product)]]" on-tap="_onDropProduct"><iron-icon icon="delete"></iron-icon>Delete</paper-button>
                   <iron-ajax name="createProduct"
                     url="http://seerio.us/kdlproxy/products/"
                     on-response="_onUpdateResponse"
@@ -129,6 +129,9 @@
           notify:true,
           value: false
         }
+      }
+      ,isNew : function(product) {
+        return !product._id;
       }
       /*
        *
@@ -233,8 +236,9 @@
           var item = this.$$('.list-item[key="'+product._id+'"]');
           var ajax = item.querySelector('[name="updateProduct"]');
           ajax.body = JSON.stringify({
-                fullName :  product.fullName,
-                phoneNumber : product.phoneNumber
+                name :  product.name,
+                billingPeriod : product.billingPeriod,
+                price : product.price
               });
           ajax.generateRequest();
         } else {

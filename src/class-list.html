@@ -53,7 +53,15 @@
       ,_onResponse : function(e) {
         this.domHost.set('loaded',true);
         if(!e.detail.response.error) {
+          //TODEL:
+          e.detail.response.forEach(function(d) {
+            d.students && d.students.forEach(function(x) {
+              x.payments = [{month: 'may-2016', owed : '300'},{month:'june-2016', owed: '300'}];
+            })
+          })
           this.set('classes', e.detail.response);
+          
+
           //TODEL:
           /*
           this.set('classes', [

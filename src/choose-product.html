@@ -74,7 +74,7 @@
       if(e.detail.confirmed && !e.detail.canceled) {
         var products = this.items.filter(function(d) { return d.__choosen__ } );
         if(products.length) {
-          this.fire( 'products-choosen', { products: products } );
+          this.detail.ok(products);
         }
       }
     }

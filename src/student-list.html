@@ -34,7 +34,7 @@
 
     <paper-material class="card-holder">
       <template name="student-repeat" is="dom-repeat" items="{{students}}" as="student">
-        <div class="list-item" 
+        <div class="list-item student" 
             key$="[[student._id]]" editing$="[[student._editing]]" viewing$="[[!student._editing]]">
           <form is="iron-form">
             <div class="list-row title content">
@@ -44,7 +44,7 @@
                 </div>
                 <paper-input class="input" value="{{student.fullName}}" label="Full name" size="40" required error-message="Required" dir="rtl" disabled="[[!student._editing]]"></paper-input>
               </div>
-              <expand-button opened="{{student._expanded}}" on-close="_onCancel"></expand-button>
+              <expand-button opened="{{student._expanded}}" on-close="_onCancel" on-open="_runSync"></expand-button>
             </div>
             <iron-collapse opened="[[student._expanded]]">
               <div class="list-column">
@@ -58,10 +58,102 @@
                       <paper-input class="input" label="Phone" value="{{student.phoneNumber}}" required error-message="Required" dir="rtl" disabled="[[!student._editing]]"></paper-input>
                     </div>
                   </div>
+                  <table class="item-table">
+                    <thead>
+                      <tr>
+                        <th colspan=2><paper-icon-button icon="add" on-tap="_addProduct"></paper-icon-button>Products</th>
+                      </tr>
+                      <tr hidden$="[[!hasProducts(student.products.*)]]"><th>Name</th><th>Price</th><!--th>Billing period</th--></tr>
+                    </thead>
+                    <tbody>
+                        <!--tr hidden$="[[hasProducts(student.products.*)]]"><td colspan=100 class="no-items">No products selected</td></tr-->
+                      <template name="product-repeat" is="dom-repeat" items="{{student.products}}" as="product">
+                        <tr class="product" key$="[[product._id]]" deleted$="[[product._deleted_]]" hidden$="[[product._deleted_]]">
+                          <td class="product-name">
+                            <paper-icon-button icon="remove-circle-outline" class="drop" on-tap="_dropProduct"></paper-icon-button>
+                            [[product.baseProduct.name]]
+                            <iron-ajax name="addProduct"
+                              url="http://seerio.us/kdlproxy/students/products/[[student._id]]" 
+                              on-response="_onAddProductResponse"
+                              on-error="_onError"
+                              method="POST"
+                              content-type="application/json"
+                              ></iron-ajax>
+                              <iron-ajax name="dropProduct"
+                              url="http://seerio.us/kdlproxy/students/products/[[student._id]]/[[product._id]]" 
+                              on-response="_onDropProductResponse"
+                              on-error="_onError"
+                              method="DELETE"
+                              content-type="application/json"
+                              ></iron-ajax>
+                          </td>
+                          <td class="control">
+                            <div class="text">[[product.price]]</div>
+                            <div class="input">
+                              <paper-input name="product-price" value="{{product.price}}" placeholder="Base [[product.baseProduct.price]]" disabled$="[[product._deleted_]]" type=number required error-message="Required" dir="rtl"></paper-input>
+                            </div>
+                          </td>
+                          <!--td>
+                            <div class="text">[[product.baseProduct.billingPeriod]]</div>
+                          </td-->
+                        </tr>
+                        <tr><td colspan="2" class="sub-info"><span hidden$="[[!product.dateCreated]]">started [[FD(product.dateCreated)]]</span></td></tr>
+                      </template>
+                    </tbody>
+                  </table>
+                  <div hidden$="[[student.sync]]" class="item-table">
+                    <div style="display:inline-block;padding:24px;font-weight:bold">Owed payments</div>
+                    <div style="display:inline-block;line-height:initial;vertical-align:middle"><paper-spinner hidden$="[[student.sync]]" active="true"></paper-spinner></div>
+                  </div>
+                  <div hidden$="[[!student.sync]]">
+                    <div class="no-items item-table" hidden$="[[hasPayments(student.payments.*)]]">No owed payments</div>
+                    <table class="item-table" hidden$="[[!hasPayments(student.payments.*)]]">
+                      <thead>
+                        <tr>
+                          <th colspan=2>
+                            <!--paper-icon-button icon="create" class="edit" on-tap="_editPayments"></paper-icon-button-->
+                            Owed payments
+                          </th>
+                        </tr>
+                        <tr>
+                          <th>Product name</th>
+                          <th>Due / Payment</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <template name="payment-repeat" is="dom-repeat" items="{{student.payments}}" as="payment">
+                          <tr class="payment" key$="[[payment._id]]" deleted$="[[payment._deleted_]]" hidden$="[[payment._deleted_]]">
+                            <td>[[payment.product.baseProduct]]</td>
+                            <td class="control">
+                            <div class="text">[[payment.paidAmount]] / [[payment.dueAmount]]</div>
+                            <div class="input">
+                              <paper-input 
+                                name="payment-paid-amount" 
+                                value="{{payment.paidAmount}}" 
+                                type=number 
+                                min="0" 
+                                max="[[payment.dueAmount]]"
+                                dir="rtl"
+                                disabled$="[[disableUnpaid(index,student.payments.*)]]"></paper-input> / [[payment.dueAmount]]
+                            </div>
+                            <iron-ajax name="updatePayment"
+                              url="http://seerio.us/kdlproxy/payments/[[payment._id]]"
+                              on-response="_onUpdatePaymentResponse"
+                              on-error="_onUpdatePaymentError"
+                              content-type="application/json"
+                              method="PUT"
+                              ></iron-ajax>
+                          </td>
+                          </tr>
+                          <tr><td class="sub-info"></td><td class="sub-info">[[FD(payment.paidDate)]]</td></tr>
+                        </template>
+                      </tbody>
+                    </table>
+                  </div>
                 <div class="form-controls">
-                  <paper-button class="edit" on-tap="_onEditMode"><iron-icon icon="create"></iron-icon>Edit</paper-button>
-                  <paper-button class="save" on-tap="_onSave">Save</paper-button>
-                  <paper-button class="drop" on-tap="_onDropStudent"><iron-icon icon="delete"></iron-icon>Delete</paper-button>
+                  <paper-button class="edit" on-tap="_editMode"><iron-icon icon="create"></iron-icon>Edit</paper-button>
+                  <paper-button class="save" on-tap="_onSave">Submit</paper-button>
+                  <paper-button hidden$="[[isNew(student)]]" class="drop" on-tap="_onDropStudent"><iron-icon icon="delete"></iron-icon>Delete</paper-button>
                   <iron-ajax name="createStudent"
                     url="http://seerio.us/kdlproxy/students"
                     on-response="_onUpdateResponse"
@@ -82,6 +174,20 @@
                     on-error="_onModifyError"
                     content-type="application/json"
                     method="PUT"
+                    ></iron-ajax>
+                  <iron-ajax name="syncPayments"
+                    url="http://seerio.us/kdlproxy/payments/init/[[student._id]]"
+                    on-response="_onSyncResponse"
+                    on-error="_onSyncError"
+                    content-type="application/json"
+                    method="GET"
+                    ></iron-ajax>
+                  <iron-ajax name="getPayments"
+                    url="http://seerio.us/kdlproxy/payments/student/[[student._id]]"
+                    on-response="_onGetPaymentsResponse"
+                    on-error="_onGetPaymentsError"
+                    content-type="application/json"
+                    method="GET"
                     ></iron-ajax>
                 </div>
               </div>
@@ -111,6 +217,30 @@
           value: false
         }
       }
+      ,ZERO : function(d) {
+        return d ? d : 0;
+      }
+      ,FD : function(d) {
+        if(!d) return d;
+        d = new Date(d);
+        return (d.getDate()+100+"").substr(1) + '/' + (d.getMonth()+101+"").substr(1) + '/' +d.getFullYear();
+      }
+      ,isNew : function(student) {
+        return !student._id;
+      }
+      ,hasProducts : function(e) {
+        return !!e.base.filter(function(x) { return !x._deleted_ }).length;
+      }
+      ,hasPayments : function(e,sync) {
+        return !!e.base.length;
+      }
+      ,disableUnpaid : function(index,e) {
+        var previous = index>0 ? e.base[index-1] : null;
+        if(previous) {
+          return previous.paidAmount<previous.dueAmount;
+        }
+        return false;
+      }
       /*
        *
        *  Server responses
@@ -138,13 +268,28 @@
       ,_onGetStudentsResponse : function(e) {
         this.domHost.set('loaded',true);
         if(!e.detail.response.message) {
-          //TODEL:
-          /*e.detail.response.forEach(function(x,i) { 
-            x._id = ''+(1+i); 
-            x.fullName = 'John Pearpeach'; 
-            x.phoneNumber = '+1-800-123-01-21';
-          });*/
+          console.log(JSON.parse(JSON.stringify(e.detail.response)));
 
+          e.detail.response.forEach(function(x,i) {
+            x.sync = false;
+            x.payments = [];
+            /*x.payments = [{
+                amount:200,
+                paid:true,
+                paidDate:'2016-08-10T20:13:35.407Z',
+                product:{
+                  _id:'1',
+                  price:200,
+                  baseProduct:{
+                    _id:'1',
+                    name:'Test product',
+                    price:300,
+                    billingPeriod:'month'
+                  }
+                }
+              }]*/
+          });
+          
           e.detail.response.forEach(function(x) { 
             x._editing = false ; 
           });
@@ -160,11 +305,43 @@
         e.model.set('student._editing',true);
         this.fire('page-error',{ message: "Server can't modifify this student" } );
       }
+
       /*
        *
        *  Commands execution
        *
        */
+      ,_addProduct : function(e) {
+        var self = this;
+        //this.domHost.$.productlist.open();
+        this.fire('choose-product',{  
+            ok : function(result) {
+              var model = e.model;
+              var products = model.student.products;
+              var choosen = result/*.filter(function(p) {
+                for(var i=0;i<products.length;++i) {
+                  if(products[i].baseProduct._id===p._id  && !products[i]._deleted_)
+                    return false
+                }
+                return true;
+              });*/
+              if(choosen.length) {
+                for(var i=0;i<choosen.length;++i) {
+                  model.push('student.products', { 
+                    baseProduct: choosen[i]
+                    ,price:''
+                  });
+                }
+                model.dataHost.render();
+                model.set('student._expanded',true);
+                self._editMode(e);
+              }
+            } 
+          });
+      }
+      ,_dropProduct : function(e) {
+        e.model.set('product._deleted_', true);
+      }
       ,_onAddNew : function() {
         this.unshift('students',{
           _editing : true,
@@ -181,14 +358,40 @@
             text: 'Do you really want to delete this student?', 
             ok : function() {
               console.log('drop student');
-              var ajax = self.$$('.list-item[key="'+e.model.student._id+'"] [name="dropStudent"]');
+              var ajax = self.$$('.student[key="'+e.model.student._id+'"] [name="dropStudent"]');
               ajax.body = '';
               ajax.generateRequest();
             } 
           }); 
         }
       }
-      ,_onEditMode : function(e) {
+      ,_onAddProductResponse : function(e) {
+        if(!e.detail.response.message) {
+          var student = e.target.studentModel.student;
+          var product = e.model.product;
+          var server = e.detail.response.products.filter(function(p) {
+            return p.baseProduct === product.baseProduct._id;
+          })[0];
+          e.model.set('product._id',server._id);
+          e.model.set('product.dateCreated',server.dateCreated);
+        } else {
+          this.set('student._editing',true);
+          this.fire('page-error',{ message: e.detail.response.message } );
+        }
+      }
+      ,_onDropProductResponse : function(e) {
+        if(!e.detail.response.message) {
+          e.target.studentModel.arrayDelete('student.products', e.model.product);
+        } else {
+          this.fire('page-error',{ message: e.detail.response.message } );
+          this.set('student._editing',true);
+          e.model.set('product._deleted_', false);
+        }
+      }
+      ,_editPayments : function(e) {
+
+      }
+      ,_editMode : function(e) {
         e.model._originalStudentItem_ = JSON.parse(JSON.stringify(e.model.student));
         e.model.set('student._editing',true);
       }
@@ -208,15 +411,120 @@
         } else if(student._id !== undefined) {
           //update student
           console.log('update student');
-          var ajax = this.$$('.list-item[key="'+student._id+'"] [name="updateStudent"]');
-          ajax.body = JSON.stringify({
+          var studentRoot = this.$$('.list-item[key="'+student._id+'"]');
+          var updateStudent = studentRoot.querySelector('[name="updateStudent"]');
+          updateStudent.body = JSON.stringify({
                 fullName :  student.fullName,
                 phoneNumber : student.phoneNumber
               });
-          ajax.generateRequest();
+          updateStudent.generateRequest();
+        
+          var productHost = studentRoot.querySelector( '[name="product-repeat"]');
+
+          //create products
+          [].forEach.call(studentRoot.querySelectorAll('.product:not([key]):not([deleted]) [name="addProduct"]'),
+          function(ajax){
+            console.log('add product');
+            var product = productHost.modelForElement(ajax).product;
+            ajax.studentModel = model;
+            ajax.body = JSON.stringify({
+              baseProduct: product.baseProduct._id,
+              price : product.price
+            });
+            ajax.generateRequest();
+          });
+
+          //drop products
+          [].forEach.call(studentRoot.querySelectorAll('.product[key][deleted] [name="dropProduct"]'),
+          function(ajax) {
+            console.log('drop product');
+            ajax.studentModel = model;
+            ajax.body = '';
+            ajax.generateRequest();
+          });
+
+          //cleanup products
+          [].forEach.call(studentRoot.querySelectorAll('.product:not([key])[deleted]'),
+          function(item) {
+            var product = productHost.modelForElement(item).product;
+            model.arrayDelete('student.products',product);
+          });
+
+          //update payments
+          var paymentHost = studentRoot.querySelector( '[name="payment-repeat"]');
+          [].forEach.call(studentRoot.querySelectorAll('.payment[key] [name="updatePayment"]'),
+          function(ajax) {
+            var payment = paymentHost.modelForElement(ajax).payment;
+            student.paymentUpdates = 0;
+            var send = {
+              paidAmount : payment.paidAmount,
+              paid : payment.dueAmount===payment.paidAmount,
+              paidDate : new Date().toISOString()
+            };
+            student._old_payments.forEach(function(oldpayment) {
+              if(oldpayment._id===payment._id) {
+                if(oldpayment.paidAmount !== payment.paidAmount) {
+                  ajax.body = JSON.stringify(send);
+                  ajax.student = student;
+                  student.paymentUpdates++;
+                  ajax.generateRequest();
+                }
+              }
+            });
+          })
         } else {
           //cleanup
           this._onCancel(e);
+        }
+      }
+      ,_runSync : function(e) {
+        var ajax = this.$$('.student[key="'+e.model.student._id+'"] [name="syncPayments"]');
+        ajax.body = '';
+        ajax.generateRequest();
+        e.model.set('student.sync',false);
+      }
+      ,_onSyncResponse : function(e) {
+        if(e.detail.response && e.detail.response==='success') {
+          var ajax = this.$$('.student[key="'+e.model.student._id+'"] [name="getPayments"]');
+          ajax.body = '';
+          ajax.generateRequest();
+        }
+      }
+      ,_onSyncError : function(e) {
+        this.fire('page-error',{ message: 'Network problems! Try again later' } );
+      }
+      ,_onGetPaymentsResponse : function(e) {
+        if(!e.detail.response.message) {
+          console.log(JSON.parse(JSON.stringify(e.detail.response)));
+          /*e.detail.response.forEach(function(p) {
+            if(p.paidAmount===0) 
+              p.paidAmount = undefined;
+          })*/
+          //<TODEL:
+          e.detail.response.forEach(function(p) {
+            //p.paidDate = '2016-08-10T20:13:35.407Z';
+          });
+          //TODEL>
+          e.model.set('student._old_payments',JSON.parse(JSON.stringify(e.detail.response)));
+          e.model.set('student.payments',e.detail.response);
+          e.model.set('student.sync', true);
+        } else {
+          this.fire('page-error',{ message: e.detail.response.message } );
+        }
+      }
+      ,_onGetPaimentsError : function(e) {
+        this.fire('page-error',{ message: 'Network problems! Try again later' } );
+      }
+      ,_onUpdatePaymentResponse : function(e) {
+
+        if(!--e.model.student.paymentUpdates) {
+          this._runSync(e);
+        }
+      }
+      ,_onUpdatePaymentError : function(e) {
+
+        if(!--e.model.student.paymentUpdates) {
+          this._runSync(e);
         }
       }
       ,_onCancel : function(e) {

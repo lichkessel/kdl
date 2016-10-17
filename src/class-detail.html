@@ -39,7 +39,7 @@
             <paper-button class="edit" on-tap="_editMode"><iron-icon icon="create"></iron-icon>Edit</paper-button>
             <paper-button class="cancel" on-tap="_onCancel">Cancel</paper-button>
             <paper-button class="save" on-tap="_onSave">Save</paper-button>
-            <paper-button class="drop" on-tap="_dropClass"><iron-icon icon="delete"></iron-icon>Delete</paper-button>
+            <paper-button hidden$="[[isNewItem(classItem)]]" class="drop" on-tap="_dropClass"><iron-icon icon="delete"></iron-icon>Delete</paper-button>
           </div>
           <!--div class="card-title-buttons">
             <paper-button hidden$="[[viewing]]" on-tap="_addStudent"><iron-icon icon="add"></iron-icon>Add students</paper-button>
@@ -104,6 +104,24 @@
                         </template>
                       </tbody>
                     </table>
+                    <div class="no-items item-table" hidden$="[[hasPayments(student.payments.*)]]">No owed payments</div>
+                    <table class="item-table" hidden$="[[!hasPayments(student.payments.*)]]">
+                      <thead>
+                        <tr>
+                          <th colspan=2>Owed payments</th>
+                        </tr>
+                        <tr><th>Month</th><th>Amount</th></tr>
+                      </thead>
+                      <tbody>
+                        <template name="payment-repeat" is="dom-repeat" items="{{student.payments}}" as="payment">
+                          <tr class="payment" key$="[[payment._id]]" deleted$="[[payment._deleted_]]" hidden$="[[payment._deleted_]]">
+                            <td>[[payment.month]]</td>
+                            <td>[[payment.owed]]</td>
+                          </tr>
+                        </template>
+                      </tbody>
+                    </table>
+
                 </iron-collapse>
                 <!--paper-spinner class="toggle-spinner" active or-hidden-1$="[[!student._expanded]]" or-hidden-2$="[[student._ready]]"></paper-spinner-->
                 
@@ -177,7 +195,7 @@
       }
       ,listeners : {
         'students-added' : '_onStudentsAdded'
-        ,'products-added' : '_onProductsAdded'
+        //,'products-added' : '_onProductsAdded'
       }
       ,_computeHasStudents : function(x) {
         return !!this.classItem.students.filter(function(x) { return !x._deleted_ }).length;
@@ -185,12 +203,18 @@
       ,hasProducts : function(e) {
         return !!e.base.filter(function(x) { return !x._deleted_ }).length;
       }
+      ,hasPayments : function(e) {
+        return !!e.base.length;
+      }
+      ,isNewItem : function(item) {
+        return !item._id;
+      }
       ,_editMode : function() {
         this._originalClassItem_ = JSON.parse(JSON.stringify(this.classItem));
         this.set('classItem._editing',true);
       }
       ,_dropClass : function() {
-        if(this.classItem._id == undefined) {
+        if(this.classItem._id === undefined) {
           this.domHost.load('class-list');
         } else {
           var self = this;
@@ -213,8 +237,31 @@
         e.model.set('student._deleted_',true);
       }
       ,_addProduct : function(e) {
-        this._currentStudentModel_ = e.model; 
-        this.domHost.$.productlist.open();
+        var self = this;
+        this.fire('choose-product',{  
+            ok : function(result) {
+              var model = e.model;
+              var products = model.student.products;
+              var choosen = result/*.filter(function(p) {
+                for(var i=0;i<products.length;++i) {
+                  if(products[i].baseProduct._id===p._id  && !products[i]._deleted_)
+                    return false
+                }
+                return true;
+              });*/
+              if(choosen.length) {
+                for(var i=0;i<choosen.length;++i) {
+                  model.push('student.products', { 
+                    baseProduct: choosen[i]
+                    ,price:''
+                  });
+                }
+                model.dataHost.render();
+                model.set('student._expanded',true);
+                self._editMode(e);
+              }
+            } 
+          });
       }
       ,_dropProduct : function(e) {
         e.model.set('product._deleted_', true);
@@ -235,6 +282,8 @@
               ,_expanded : false
               ,_deleted_ : false
               ,products: []
+              //TODEL:
+              ,payments : []
             });
           }
           this._editMode();
@@ -270,8 +319,12 @@
         //this.domHost.load('class-list');
       }
       ,_onCancel : function() {
-        this.set('classItem', this._originalClassItem_);
-        delete this._originalClassItem_;
+        if(this._originalClassItem_)
+          this.set('classItem', this._originalClassItem_);
+        if(this.get('classItem')._id === undefined) {
+          this.domHost.load('class-list');
+        }
+        //delete this._originalClassItem_;
       }
       ,_classTitle : function(name) {
         return name || '';

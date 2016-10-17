@@ -169,18 +169,24 @@
       ,listeners : {
         'page-error' : '_onPageError'
         ,'students-choosen' : '_onStudentsChoosen'
-        ,'products-choosen' : '_onProductsChoosen'
+        //,'products-choosen' : '_onProductsChoosen'
         ,'view-class' : '_onViewClass'
         ,'confirm' : '_onConfirm'
+        ,'choose-product' : '_onChooseProduct'
       }
       ,_onStudentsChoosen : function(e) {
         this.fire('students-added',e.detail,{ node: this.controller('class-list','class-detail'), bubbles: false });
       }
-      ,_onProductsChoosen : function(e) {
+      /*,_onProductsChoosen : function(e) {
         this.fire('products-added',e.detail,{ node: this.controller('class-list','class-detail'), bubbles: false });
-      }
+      }*/
       ,_onConfirm : function(e) {
         var dialog = this.$.confirmDialog;
+        dialog.detail = e.detail;
+        dialog.open();
+      }
+      ,_onChooseProduct : function(e) {
+        var dialog = this.$.productlist;
         dialog.detail = e.detail;
         dialog.open();
       }

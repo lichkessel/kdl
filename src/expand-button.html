@@ -18,7 +18,9 @@
     }
     ,_toggle : function(exp) {
       if(this.opened) {
-        this.fire('close',null);
+        this.fire('close', null);
+      } else {
+        this.fire('open', null);
       }
       this.set('opened', !this.opened);
 
