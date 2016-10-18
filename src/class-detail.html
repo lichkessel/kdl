@@ -55,9 +55,9 @@
               <div>
                 <div class="list-row title content">
                   <div class="static text"><paper-icon-button class="drop" icon="remove-circle" on-tap="_dropStudent"></paper-icon-button>[[student.student.fullName]]</div>
-                  <expand-button opened="{{student._expanded}}"></expand-button>
+                  <!--expand-button opened="{{student._expanded}}"></expand-button-->
                 </div>
-                <iron-collapse class="card-line-body" opened="[[student._expanded]]">
+                <!--iron-collapse class="card-line-body" opened="[[student._expanded]]">
                     
                     <table class="item-table">
                       <thead>
@@ -67,10 +67,9 @@
                           </th>
                           <th colspan=2>Products</th>
                         </tr>
-                        <tr hidden$="[[!hasProducts(student.products.*)]]"><th></th><th>Name</th><th>Price</th><!--th>Billing period</th--></tr>
+                        <tr hidden$="[[!hasProducts(student.products.*)]]"><th></th><th>Name</th><th>Price</th></tr>
                       </thead>
                       <tbody>
-                          <!--tr hidden$="[[hasProducts(student.products.*)]]"><td colspan=100 class="no-items">No products selected</td></tr-->
                         <template name="product-repeat" is="dom-repeat" items="{{student.products}}" as="product">
                           <tr class="product" key$="[[product._id]]" deleted$="[[product._deleted_]]" hidden$="[[product._deleted_]]">
                             <td class="action">
@@ -97,14 +96,11 @@
                                 <paper-input name="product-price" value="{{product.price}}" placeholder="Base [[product.baseProduct.price]]" disabled$="[[product._deleted_]]" type=number required error-message="Required" dir="rtl"></paper-input>
                               </div>
                             </td>
-                            <!--td>
-                              <div class="text">[[product.baseProduct.billingPeriod]]</div>
-                            </td-->
                           </tr>
                         </template>
                       </tbody>
-                    </table>
-                    <div class="no-items item-table" hidden$="[[hasPayments(student.payments.*)]]">No owed payments</div>
+                    </table-->
+                    <!--div class="no-items item-table" hidden$="[[hasPayments(student.payments.*)]]">No owed payments</div>
                     <table class="item-table" hidden$="[[!hasPayments(student.payments.*)]]">
                       <thead>
                         <tr>
@@ -120,9 +116,9 @@
                           </tr>
                         </template>
                       </tbody>
-                    </table>
+                    </table-->
 
-                </iron-collapse>
+                <!--/iron-collapse-->
                 <!--paper-spinner class="toggle-spinner" active or-hidden-1$="[[!student._expanded]]" or-hidden-2$="[[student._ready]]"></paper-spinner-->
                 
               </div>

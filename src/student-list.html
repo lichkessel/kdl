@@ -26,7 +26,7 @@
     <iron-ajax id="get"
       url="http://seerio.us/kdlproxy/students"
       on-response="_onGetStudentsResponse"
-      on-error="_onError"
+      on-error="_onGetStudentsError"
       content-type="application/json"
       ></iron-ajax>
 
@@ -44,7 +44,7 @@
                 </div>
                 <paper-input class="input" value="{{student.fullName}}" label="Full name" size="40" required error-message="Required" dir="rtl" disabled="[[!student._editing]]"></paper-input>
               </div>
-              <expand-button opened="{{student._expanded}}" on-close="_onCancel" on-open="_runSync"></expand-button>
+              <expand-button opened="{{student._expanded}}" on-close="_onCancel" on-open="_onOpen"></expand-button>
             </div>
             <iron-collapse opened="[[student._expanded]]">
               <div class="list-column">
@@ -75,15 +75,22 @@
                             <iron-ajax name="addProduct"
                               url="http://seerio.us/kdlproxy/students/products/[[student._id]]" 
                               on-response="_onAddProductResponse"
-                              on-error="_onError"
+                              on-error="_onAddProductError"
                               method="POST"
                               content-type="application/json"
                               ></iron-ajax>
-                              <iron-ajax name="dropProduct"
+                            <iron-ajax name="dropProduct"
                               url="http://seerio.us/kdlproxy/students/products/[[student._id]]/[[product._id]]" 
                               on-response="_onDropProductResponse"
-                              on-error="_onError"
+                              on-error="_onDropProductError"
                               method="DELETE"
+                              content-type="application/json"
+                              ></iron-ajax>
+                            <iron-ajax name="updateProduct"
+                              url="http://seerio.us/kdlproxy/students/products/[[student._id]]/[[product._id]]" 
+                              on-response="_onUpdateProductResponse"
+                              on-error="_onUpdateProductError"
+                              method="PUT"
                               content-type="application/json"
                               ></iron-ajax>
                           </td>
@@ -110,10 +117,7 @@
                     <table class="item-table" hidden$="[[!hasPayments(student.payments.*)]]">
                       <thead>
                         <tr>
-                          <th colspan=2>
-                            <!--paper-icon-button icon="create" class="edit" on-tap="_editPayments"></paper-icon-button-->
-                            Owed payments
-                          </th>
+                          <th colspan=2>Owed payments</th>
                         </tr>
                         <tr>
                           <th>Product name</th>
@@ -123,7 +127,7 @@
                       <tbody>
                         <template name="payment-repeat" is="dom-repeat" items="{{student.payments}}" as="payment">
                           <tr class="payment" key$="[[payment._id]]" deleted$="[[payment._deleted_]]" hidden$="[[payment._deleted_]]">
-                            <td>[[payment.product.baseProduct]]</td>
+                            <td>[[payment.product.baseProduct.name]]</td>
                             <td class="control">
                             <div class="text">[[payment.paidAmount]] / [[payment.dueAmount]]</div>
                             <div class="input">
@@ -145,7 +149,7 @@
                               ></iron-ajax>
                           </td>
                           </tr>
-                          <tr><td class="sub-info"></td><td class="sub-info">[[FD(payment.paidDate)]]</td></tr>
+                          <tr><td class="sub-info"></td><td class="sub-info">[[FD(payment.dueDate)]]</td></tr>
                         </template>
                       </tbody>
                     </table>
@@ -153,25 +157,32 @@
                 <div class="form-controls">
                   <paper-button class="edit" on-tap="_editMode"><iron-icon icon="create"></iron-icon>Edit</paper-button>
                   <paper-button class="save" on-tap="_onSave">Submit</paper-button>
-                  <paper-button hidden$="[[isNew(student)]]" class="drop" on-tap="_onDropStudent"><iron-icon icon="delete"></iron-icon>Delete</paper-button>
+                  <paper-button hidden$="[[isNew(student)]]" class="drop" on-tap="_dropStudent"><iron-icon icon="delete"></iron-icon>Delete</paper-button>
                   <iron-ajax name="createStudent"
                     url="http://seerio.us/kdlproxy/students"
                     on-response="_onUpdateResponse"
-                    on-error="_onError"
+                    on-error="_onUpdateError"
                     content-type="application/json"
                     method="POST"
                     ></iron-ajax>
                   <iron-ajax name="dropStudent"
                     url="http://seerio.us/kdlproxy/students/[[student._id]]"
                     on-response="_onDropResponse"
-                    on-error="_onModifyError"
+                    on-error="_onDropError"
                     content-type="application/json"
                     method="DELETE"
+                    ></iron-ajax>
+                  <iron-ajax name="getStudent"
+                    url="http://seerio.us/kdlproxy/students/[[student._id]]"
+                    on-response="_onGetStudentResponse"
+                    on-error="_onGetStudentError"
+                    content-type="application/json"
+                    method="GET"
                     ></iron-ajax>
                   <iron-ajax name="updateStudent"
                     url="http://seerio.us/kdlproxy/students/[[student._id]]"
                     on-response="_onUpdateResponse"
-                    on-error="_onModifyError"
+                    on-error="_onUpdateError"
                     content-type="application/json"
                     method="PUT"
                     ></iron-ajax>
@@ -198,7 +209,7 @@
     </paper-material>
     <div class="add-button">
         <div>
-          <paper-fab icon="add" on-tap="_onAddNew"></paper-fab>
+          <paper-fab icon="add" on-tap="_addNew"></paper-fab>
         </div>
     </div>
   </template>
@@ -241,6 +252,11 @@
         }
         return false;
       }
+      ,prepareStudent : function(student) {
+        student.sync = false;
+        student.payments = [];
+        student._editing = false;
+      }
       /*
        *
        *  Server responses
@@ -250,12 +266,15 @@
         if(!e.detail.response.message) {
           var c = e.detail.response;
           e.model.set('student._id',c._id);
-          //TODEL:
-          //e.model.set('student._id','111');
         } else {
           e.model.set('student._editing',true);
           this.fire('page-error',{ message: e.detail.response.message } );
         }
+        this.reloadStudent(e.model);
+      }
+      ,_onUpdateError : function(e) {
+        this.fire('page-error',{ message: 'Network problems! Try again later' } );
+        this.reloadStudent(e.model);
       }
       ,_onDropResponse : function(e) {
         if(!e.detail.response.message) {
@@ -265,47 +284,119 @@
           this.fire('page-error',{ message: e.detail.response.message } );
         }
       }
+      ,_onDropError : function(e) {
+        e.model.set('student._editing',true);
+        this.fire('page-error',{ message: "Server can't modifify this student" } );
+      }
       ,_onGetStudentsResponse : function(e) {
         this.domHost.set('loaded',true);
         if(!e.detail.response.message) {
           console.log(JSON.parse(JSON.stringify(e.detail.response)));
-
+          var self = this;
           e.detail.response.forEach(function(x,i) {
-            x.sync = false;
-            x.payments = [];
-            /*x.payments = [{
-                amount:200,
-                paid:true,
-                paidDate:'2016-08-10T20:13:35.407Z',
-                product:{
-                  _id:'1',
-                  price:200,
-                  baseProduct:{
-                    _id:'1',
-                    name:'Test product',
-                    price:300,
-                    billingPeriod:'month'
-                  }
-                }
-              }]*/
-          });
-          
-          e.detail.response.forEach(function(x) { 
-            x._editing = false ; 
+            self.prepareStudent(x);
           });
           this.set('students', e.detail.response);
         } else {
           this.fire('page-error',{ message: e.detail.response.message } );
         }
       }
-      ,_onError : function(e) {
+      ,_onGetStudentsError : function(e) {
+         this.fire('page-error',{ message: 'Network problems! Try again later' } );
+      }
+      ,_onGetStudentResponse : function(e) {
+        if(!e.detail.response.message) {
+          this.prepareStudent(e.detail.response);
+          e.detail.response._expanded = true;
+          e.model.set('student', e.detail.response);
+          this._runSync(e);
+        } else {
+          this.fire('page-error',{ message: e.detail.response.message } );
+        }
+      }
+      ,_onGetStudentError : function(e) {
         this.fire('page-error',{ message: 'Network problems! Try again later' } );
       }
-      ,_onModifyError : function(e) {
-        e.model.set('student._editing',true);
-        this.fire('page-error',{ message: "Server can't modifify this student" } );
+      ,_onAddProductResponse : function(e) {
+        if(e.detail.response.message) {
+          this.set('student._editing',true);
+          this.fire('page-error',{ message: e.detail.response.message } );
+        }
+        this.reloadStudent(e.target.studentModel);
       }
-
+      ,_onAddProductError : function(e) {
+        this.fire('page-error',{ message: 'Network problems! Try again later' } );
+        this.reloadStudent(e.target.studentModel);
+      }
+      ,_onUpdateProductResponse : function(e) {
+        if(e.detail.response.message) {
+          this.set('student._editing',true);
+          this.fire('page-error',{ message: e.detail.response.message } );
+        }
+        this.reloadStudent(e.target.studentModel);
+      }
+      ,_onUpdateProductError : function(e) {
+         this.fire('page-error',{ message: 'Network problems! Try again later' } );
+         this.reloadStudent(e.target.studentModel);
+      }
+      ,_onDropProductResponse : function(e) {
+        if(!e.detail.response.message) {
+          e.target.studentModel.arrayDelete('student.products', e.model.product);
+        } else {
+          this.fire('page-error',{ message: e.detail.response.message } );
+          this.set('student._editing',true);
+          e.model.set('product._deleted_', false);
+        }
+        this.reloadStudent(e.target.studentModel);
+      }
+      ,_onDropProductError : function(e) {
+        this.fire('page-error',{ message: 'Network problems! Try again later' } );
+        this.reloadStudent(e.target.studentModel);
+      }
+      ,_onGetPaymentsResponse : function(e) {
+        if(!e.detail.response.message) {
+          console.log(JSON.parse(JSON.stringify(e.detail.response)));
+          e.detail.response.sort(function(a,b) {
+            da = new Date(a.dueDate).getTime();
+            db = new Date(b.dueDate).getTime();
+            return da > db ? 1 : (da<db ? -1 : 
+              (a.paidAmount < b.paidAmount ? 1 : (a.paidAmount > b.paidAmount ? -1 : 
+                (
+                  a.dueAmount > b.dueAmount ? 1 : (a.dueAmount < b.dueAmount ? -1 : 0)
+                )
+              ))
+            );
+          });
+          e.model.set('student._old_payments',JSON.parse(JSON.stringify(e.detail.response)));
+          e.model.set('student.payments',e.detail.response);
+          e.model.set('student.sync', true);
+        } else {
+          this.fire('page-error',{ message: e.detail.response.message } );
+        }
+      }
+      ,_onGetPaymentsError : function(e) {
+        this.fire('page-error',{ message: 'Can not get payments data.' } );
+      }
+      ,_onUpdatePaymentResponse : function(e) {
+        if(e.detail.response.message) {
+          this.fire('page-error',{ message: e.detail.response.message } );
+        }
+        this.reloadStudent(e.target.studentModel);
+      }
+      ,_onUpdatePaymentError : function(e) {
+        this.fire('page-error',{ message: "Can not update payment data."  } );
+        this.reloadStudent(e.target.studentModel);
+      }
+      ,_onSyncResponse : function(e) {
+        if(e.detail.response && e.detail.response==='success') {
+          var ajax = this.$$('.student[key="'+e.model.student._id+'"] [name="getPayments"]');
+          ajax.body = '';
+          ajax.generateRequest();
+        }
+      }
+      ,_onSyncError : function(e) {
+        this.fire('page-error',{ message: "Can not syncronize payment information." } );
+      }
       /*
        *
        *  Commands execution
@@ -326,6 +417,7 @@
                 return true;
               });*/
               if(choosen.length) {
+                self._editMode(e);
                 for(var i=0;i<choosen.length;++i) {
                   model.push('student.products', { 
                     baseProduct: choosen[i]
@@ -334,7 +426,6 @@
                 }
                 model.dataHost.render();
                 model.set('student._expanded',true);
-                self._editMode(e);
               }
             } 
           });
@@ -342,13 +433,16 @@
       ,_dropProduct : function(e) {
         e.model.set('product._deleted_', true);
       }
-      ,_onAddNew : function() {
+      ,_addNew : function() {
         this.unshift('students',{
           _editing : true,
-          _expanded : true
+          _expanded : true,
+          products:[],
+          payments:[],
+          sync:true
         })
       }
-      ,_onDropStudent : function(e) {
+      ,_dropStudent : function(e) {
          //drop student
         if(e.model.student._id === undefined) {
           this.arrayDelete('students',e.model.student);
@@ -365,59 +459,55 @@
           }); 
         }
       }
-      ,_onAddProductResponse : function(e) {
-        if(!e.detail.response.message) {
-          var student = e.target.studentModel.student;
-          var product = e.model.product;
-          var server = e.detail.response.products.filter(function(p) {
-            return p.baseProduct === product.baseProduct._id;
-          })[0];
-          e.model.set('product._id',server._id);
-          e.model.set('product.dateCreated',server.dateCreated);
-        } else {
-          this.set('student._editing',true);
-          this.fire('page-error',{ message: e.detail.response.message } );
-        }
-      }
-      ,_onDropProductResponse : function(e) {
-        if(!e.detail.response.message) {
-          e.target.studentModel.arrayDelete('student.products', e.model.product);
-        } else {
-          this.fire('page-error',{ message: e.detail.response.message } );
-          this.set('student._editing',true);
-          e.model.set('product._deleted_', false);
-        }
-      }
-      ,_editPayments : function(e) {
-
-      }
       ,_editMode : function(e) {
         e.model._originalStudentItem_ = JSON.parse(JSON.stringify(e.model.student));
         e.model.set('student._editing',true);
       }
+      ,_onCancel : function(e) {
+        if(e.model.student._id === undefined) {
+          this.arrayDelete('students',e.model.student);
+        } else {
+          if(e.model._originalStudentItem_) {
+            e.model.set('student',e.model._originalStudentItem_);
+            delete e.model._originalStudentItem_;
+          }
+        }
+      }
       ,_onSave : function(e) {
+        var self = this;
         var model = e.model;
         var student = e.model.student;
+        var oldstudent = model._originalStudentItem_;
         model.set('student._editing', false);
         if(student._id === undefined) {
           //create student
           console.log('create student');
           var ajax = e.target.parentNode.querySelector('[name="createStudent"]');
+          console.log(student);
           ajax.body = JSON.stringify({
                 fullName :  student.fullName,
-                phoneNumber : student.phoneNumber
+                phoneNumber : student.phoneNumber,
+                products : student.products.map(function(p) {
+                  return { baseProduct: p.baseProduct._id, price: p.price }
+                })
               });
           ajax.generateRequest();          
         } else if(student._id !== undefined) {
-          //update student
-          console.log('update student');
           var studentRoot = this.$$('.list-item[key="'+student._id+'"]');
           var updateStudent = studentRoot.querySelector('[name="updateStudent"]');
-          updateStudent.body = JSON.stringify({
+
+          //update student
+          if(oldstudent.fullName!==student.fullName ||
+            oldstudent.phoneNumber!==student.phoneNumber) {
+            console.log('update student');
+            updateStudent.body = JSON.stringify({
                 fullName :  student.fullName,
                 phoneNumber : student.phoneNumber
               });
-          updateStudent.generateRequest();
+            updateStudent.generateRequest();
+            self.pendReload(model);
+          }
+
         
           var productHost = studentRoot.querySelector( '[name="product-repeat"]');
 
@@ -432,6 +522,7 @@
               price : product.price
             });
             ajax.generateRequest();
+            self.pendReload(model);
           });
 
           //drop products
@@ -441,6 +532,7 @@
             ajax.studentModel = model;
             ajax.body = '';
             ajax.generateRequest();
+            self.pendReload(model);
           });
 
           //cleanup products
@@ -450,31 +542,59 @@
             model.arrayDelete('student.products',product);
           });
 
+          //update products
+          [].forEach.call(studentRoot.querySelectorAll('.product[key]:not([deleted]) [name="updateProduct"]'),
+          function(ajax) {
+            var product = productHost.modelForElement(ajax).product;
+            oldstudent.products.forEach(function(old) {
+              if(old._id==product._id) {
+                if(old.price!==product.price) {
+                  console.log('update product');
+                  ajax.studentModel = model;
+                  ajax.body = JSON.stringify({
+                    price: product.price
+                  });
+                  ajax.generateRequest();
+                  self.pendReload(model);
+                }
+              }
+            });
+            model.arrayDelete('student.products',product);
+          });
+
           //update payments
           var paymentHost = studentRoot.querySelector( '[name="payment-repeat"]');
           [].forEach.call(studentRoot.querySelectorAll('.payment[key] [name="updatePayment"]'),
           function(ajax) {
-            var payment = paymentHost.modelForElement(ajax).payment;
-            student.paymentUpdates = 0;
+            var paymentModel = paymentHost.modelForElement(ajax);
+            var payment = paymentModel.payment;
+            console.log(payment.dueAmount);
+            console.log(payment.paidAmount);
             var send = {
               paidAmount : payment.paidAmount,
-              paid : payment.dueAmount===payment.paidAmount,
+              paid : +payment.dueAmount===+payment.paidAmount,
               paidDate : new Date().toISOString()
             };
+            console.log(send);
             student._old_payments.forEach(function(oldpayment) {
-              if(oldpayment._id===payment._id) {
-                if(oldpayment.paidAmount !== payment.paidAmount) {
+              if(oldpayment._id === payment._id) {
+                if(+oldpayment.paidAmount !== +payment.paidAmount) {
+                  ajax.studentModel = model;
                   ajax.body = JSON.stringify(send);
-                  ajax.student = student;
-                  student.paymentUpdates++;
                   ajax.generateRequest();
+                  self.pendReload(model);
+                } else {
+                  paymentModel.set('payment.paidAmount',oldpayment.paidAmount);
                 }
               }
             });
-          })
+          });
         } else {
           //cleanup
-          this._onCancel(e);
+          if(model.student._id === undefined) {
+            self.arrayDelete('students',model.student);
+          }
+          self.reloadStudent(model);
         }
       }
       ,_runSync : function(e) {
@@ -483,61 +603,22 @@
         ajax.generateRequest();
         e.model.set('student.sync',false);
       }
-      ,_onSyncResponse : function(e) {
-        if(e.detail.response && e.detail.response==='success') {
-          var ajax = this.$$('.student[key="'+e.model.student._id+'"] [name="getPayments"]');
+      ,_onOpen : function(e) {
+        this._runSync(e);
+      }
+      ,pendReload : function(model) {
+        model.student._pendingReloads_ = model.student._pendingReloads_ || 0;
+        model.student._pendingReloads_++;
+      }
+      ,reloadStudent : function(model) {
+        if(model.student._pendingReloads_)
+          model.student._pendingReloads_--;
+        if(!model.student._pendingReloads_) {
+          var ajax = this.$$('.student[key="'+model.student._id+'"] [name="getStudent"]');
           ajax.body = '';
           ajax.generateRequest();
+          delete model._originalStudentItem_;
         }
-      }
-      ,_onSyncError : function(e) {
-        this.fire('page-error',{ message: 'Network problems! Try again later' } );
-      }
-      ,_onGetPaymentsResponse : function(e) {
-        if(!e.detail.response.message) {
-          console.log(JSON.parse(JSON.stringify(e.detail.response)));
-          /*e.detail.response.forEach(function(p) {
-            if(p.paidAmount===0) 
-              p.paidAmount = undefined;
-          })*/
-          //<TODEL:
-          e.detail.response.forEach(function(p) {
-            //p.paidDate = '2016-08-10T20:13:35.407Z';
-          });
-          //TODEL>
-          e.model.set('student._old_payments',JSON.parse(JSON.stringify(e.detail.response)));
-          e.model.set('student.payments',e.detail.response);
-          e.model.set('student.sync', true);
-        } else {
-          this.fire('page-error',{ message: e.detail.response.message } );
-        }
-      }
-      ,_onGetPaimentsError : function(e) {
-        this.fire('page-error',{ message: 'Network problems! Try again later' } );
-      }
-      ,_onUpdatePaymentResponse : function(e) {
-
-        if(!--e.model.student.paymentUpdates) {
-          this._runSync(e);
-        }
-      }
-      ,_onUpdatePaymentError : function(e) {
-
-        if(!--e.model.student.paymentUpdates) {
-          this._runSync(e);
-        }
-      }
-      ,_onCancel : function(e) {
-        console.log('cancel student');
-        if(e.model.student._id === undefined) {
-          this.arrayDelete('students',e.model.student);
-        } else {
-          for(var i in e.model._originalStudentItem_) {
-            e.model.set('student.'+i,e.model._originalStudentItem_[i]);
-          }
-          e.model.set('student._editing', false);
-        }
-        delete this._originalStudentItem_;
       }
       ,load : function() {
         this.$.get.generateRequest();
