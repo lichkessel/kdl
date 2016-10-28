@@ -16,6 +16,8 @@
 <link rel="import" href="../bower_components/iron-collapse/iron-collapse.html">
 <link rel="import" href="../bower_components/iron-icons/iron-icons.html">
 
+<link rel="import" href="../bower_components/gold-phone-input/gold-phone-input.html">
+
 <link rel="import" href="./shared-styles.html">
 <link rel="import" href="./expand-button.html">
 
@@ -38,13 +40,14 @@
             key$="[[student._id]]" editing$="[[student._editing]]" viewing$="[[!student._editing]]">
           <form is="iron-form">
             <div class="list-row title content">
-              <div class="control" style="flex-grow:1">
+              <expand-button opened="{{student._expanded}}" on-close="_onCancel" on-open="_onOpen">
+                <div class="control" style="flex-grow:1">
                 <div class="text">
                   <p>[[student.fullName]]</p>
                 </div>
-                <paper-input class="input" value="{{student.fullName}}" label="Full name" size="40" required error-message="Required" dir="rtl" disabled="[[!student._editing]]"></paper-input>
+                <paper-input class="input" value="{{student.fullName}}" label="Full name" size="28" required error-message="Must be nonempty name" dir="rtl" disabled="[[!student._editing]]"></paper-input>
               </div>
-              <expand-button opened="{{student._expanded}}" on-close="_onCancel" on-open="_onOpen"></expand-button>
+              </expand-button>
             </div>
             <iron-collapse opened="[[student._expanded]]">
               <div class="list-column">
@@ -53,9 +56,10 @@
                     <div class="control">
                       <div class="text">
                         <label>Phone</label>
-                        <p>[[student.phoneNumber]]</p>
+                        <p>[[PHONE(student.phoneNumber)]]</p>
                       </div>
-                      <paper-input class="input" label="Phone" value="{{student.phoneNumber}}" required error-message="Required" dir="rtl" disabled="[[!student._editing]]"></paper-input>
+                      <!--paper-input class="input" label="Phone" value="{{student.phoneNumber}}" required error-message="Required" dir="rtl" disabled="[[!student._editing]]"></paper-input-->
+                      <gold-phone-input class="input" dir="rtl" required label="Phone" value="{{student.phoneNumber}}" error-message="Must be a phone number" disabled="[[!student._editing]]" maxlength="12"></gold-phone-input>
                     </div>
                   </div>
                   <table class="item-table">
@@ -97,7 +101,19 @@
                           <td class="control">
                             <div class="text">[[product.price]]</div>
                             <div class="input">
-                              <paper-input name="product-price" value="{{product.price}}" placeholder="Base [[product.baseProduct.price]]" disabled$="[[product._deleted_]]" type=number required error-message="Required" dir="rtl"></paper-input>
+                              <paper-input 
+                                name="product-price" 
+                                value="{{product.price}}" 
+                                placeholder="[[product.baseProduct.price]]" 
+                                disabled$="[[product._deleted_]]" 
+                                type=number 
+                                required
+                                error-message="Price must be more than 0 and less than [[product.baseProduct.price]]" 
+                                dir="rtl"
+                                min="0"
+                                max="[[product.baseProduct.price]]"
+                                auto-validate
+                                ></paper-input>
                             </div>
                           </td>
                           <!--td>
@@ -129,12 +145,15 @@
                           <tr class="payment" key$="[[payment._id]]" deleted$="[[payment._deleted_]]" hidden$="[[payment._deleted_]]">
                             <td>[[payment.product.baseProduct.name]]</td>
                             <td class="control">
-                            <div class="text">[[payment.paidAmount]] / [[payment.dueAmount]]</div>
+                            <div class="text">[[ZERO(payment.paidAmount)]] / [[payment.dueAmount]]</div>
                             <div class="input">
                               <paper-input 
-                                name="payment-paid-amount" 
-                                value="{{payment.paidAmount}}" 
-                                type=number 
+                                name="payment-paid-amount"
+                                error-message="[[payment.dueAmount]]"
+                                placeholder="0"
+                                auto-validate
+                                value="{{payment.paidAmount}}"
+                                type=number
                                 min="0" 
                                 max="[[payment.dueAmount]]"
                                 dir="rtl"
@@ -160,14 +179,14 @@
                   <paper-button hidden$="[[isNew(student)]]" class="drop" on-tap="_dropStudent"><iron-icon icon="delete"></iron-icon>Delete</paper-button>
                   <iron-ajax name="createStudent"
                     url="http://seerio.us/kdlproxy/students"
-                    on-response="_onUpdateResponse"
+                    on-response="_onCreateResponse"
                     on-error="_onUpdateError"
                     content-type="application/json"
                     method="POST"
                     ></iron-ajax>
                   <iron-ajax name="dropStudent"
                     url="http://seerio.us/kdlproxy/students/[[student._id]]"
-                    on-response="_onDropResponse"
+                    on-response="_onCreateResponse"
                     on-error="_onDropError"
                     content-type="application/json"
                     method="DELETE"
@@ -214,6 +233,12 @@
     </div>
   </template>
   <script>
+    function UT(elem,tag,attr) {
+        var e = elem;
+        while(e && (e.tagName.toLowerCase() != tag.toLowerCase() || attr && !e.hasAttribute(attr)))
+          e = e.parentNode;
+        return e && e.nodeType == 1 ? e : null;
+    }
     Polymer({
       is: 'student-list',
       properties : {
@@ -227,6 +252,9 @@
           notify:true,
           value: false
         }
+      }
+      ,PHONE : function(p) {
+        return p ? ('+1 '+p) : p;
       }
       ,ZERO : function(d) {
         return d ? d : 0;
@@ -248,7 +276,7 @@
       ,disableUnpaid : function(index,e) {
         var previous = index>0 ? e.base[index-1] : null;
         if(previous) {
-          return previous.paidAmount<previous.dueAmount;
+          return (previous.paidAmount||0)<previous.dueAmount;
         }
         return false;
       }
@@ -262,6 +290,20 @@
        *  Server responses
        *
        */
+      ,_onCreateResponse : function(e) {
+        if(!e.detail.response.message) {
+          var c = e.detail.response;
+          e.model.set('student._id',c._id);
+        } else {
+          e.model.set('student._editing',true);
+          this.fire('page-error',{ message: e.detail.response.message } );
+        }
+        this.reloadStudent(e.model);
+      }
+      ,_onCreateError : function(e) {
+        this.fire('page-error',{ message: "Can't add student. Try again later" } );
+        e.model.set('student._editing',true);
+      }
       ,_onUpdateResponse : function(e) {
         if(!e.detail.response.message) {
           var c = e.detail.response;
@@ -367,6 +409,9 @@
               ))
             );
           });
+          e.detail.response.forEach(function(p) {
+            p.paidAmount = p.paidAmount || undefined;
+          });
           e.model.set('student._old_payments',JSON.parse(JSON.stringify(e.detail.response)));
           e.model.set('student.payments',e.detail.response);
           e.model.set('student.sync', true);
@@ -421,7 +466,7 @@
                 for(var i=0;i<choosen.length;++i) {
                   model.push('student.products', { 
                     baseProduct: choosen[i]
-                    ,price:''
+                    ,price: choosen[i].price
                   });
                 }
                 model.dataHost.render();
@@ -478,123 +523,128 @@
         var model = e.model;
         var student = e.model.student;
         var oldstudent = model._originalStudentItem_;
-        model.set('student._editing', false);
-        if(student._id === undefined) {
-          //create student
-          console.log('create student');
-          var ajax = e.target.parentNode.querySelector('[name="createStudent"]');
-          console.log(student);
-          ajax.body = JSON.stringify({
-                fullName :  student.fullName,
-                phoneNumber : student.phoneNumber,
-                products : student.products.map(function(p) {
-                  return { baseProduct: p.baseProduct._id, price: p.price }
-                })
-              });
-          ajax.generateRequest();          
-        } else if(student._id !== undefined) {
-          var studentRoot = this.$$('.list-item[key="'+student._id+'"]');
-          var updateStudent = studentRoot.querySelector('[name="updateStudent"]');
-
-          //update student
-          if(oldstudent.fullName!==student.fullName ||
-            oldstudent.phoneNumber!==student.phoneNumber) {
-            console.log('update student');
-            updateStudent.body = JSON.stringify({
-                fullName :  student.fullName,
-                phoneNumber : student.phoneNumber
-              });
-            updateStudent.generateRequest();
-            self.pendReload(model);
-          }
-
-        
-          var productHost = studentRoot.querySelector( '[name="product-repeat"]');
-
-          //create products
-          [].forEach.call(studentRoot.querySelectorAll('.product:not([key]):not([deleted]) [name="addProduct"]'),
-          function(ajax){
-            console.log('add product');
-            var product = productHost.modelForElement(ajax).product;
-            ajax.studentModel = model;
+        var form = UT(e.target,'form');
+        if(form.validate()) {
+          model.set('student._editing', false);
+          if(student._id === undefined) {
+            //create student
+            console.log('create student');
+            var ajax = e.target.parentNode.querySelector('[name="createStudent"]');
+            console.log(student);
             ajax.body = JSON.stringify({
-              baseProduct: product.baseProduct._id,
-              price : product.price
+                  fullName :  student.fullName,
+                  phoneNumber : student.phoneNumber,
+                  products : student.products.map(function(p) {
+                    return { baseProduct: p.baseProduct._id, price: p.price }
+                  })
+                });
+            ajax.generateRequest();          
+          } else if(student._id !== undefined) {
+            var studentRoot = this.$$('.list-item[key="'+student._id+'"]');
+            var updateStudent = studentRoot.querySelector('[name="updateStudent"]');
+
+            //update student
+            if(oldstudent.fullName!==student.fullName ||
+              oldstudent.phoneNumber!==student.phoneNumber) {
+              console.log('update student');
+              updateStudent.body = JSON.stringify({
+                  fullName :  student.fullName,
+                  phoneNumber : student.phoneNumber
+                });
+              updateStudent.generateRequest();
+              self.pendReload(model);
+            }
+
+          
+            var productHost = studentRoot.querySelector( '[name="product-repeat"]');
+
+            //create products
+            [].forEach.call(studentRoot.querySelectorAll('.product:not([key]):not([deleted]) [name="addProduct"]'),
+            function(ajax){
+              console.log('add product');
+              var product = productHost.modelForElement(ajax).product;
+              ajax.studentModel = model;
+              ajax.body = JSON.stringify({
+                baseProduct: product.baseProduct._id,
+                price : product.price
+              });
+              ajax.generateRequest();
+              self.pendReload(model);
             });
-            ajax.generateRequest();
-            self.pendReload(model);
-          });
 
-          //drop products
-          [].forEach.call(studentRoot.querySelectorAll('.product[key][deleted] [name="dropProduct"]'),
-          function(ajax) {
-            console.log('drop product');
-            ajax.studentModel = model;
-            ajax.body = '';
-            ajax.generateRequest();
-            self.pendReload(model);
-          });
+            //drop products
+            [].forEach.call(studentRoot.querySelectorAll('.product[key][deleted] [name="dropProduct"]'),
+            function(ajax) {
+              console.log('drop product');
+              ajax.studentModel = model;
+              ajax.body = '';
+              ajax.generateRequest();
+              self.pendReload(model);
+            });
 
-          //cleanup products
-          [].forEach.call(studentRoot.querySelectorAll('.product:not([key])[deleted]'),
-          function(item) {
-            var product = productHost.modelForElement(item).product;
-            model.arrayDelete('student.products',product);
-          });
+            //cleanup products
+            [].forEach.call(studentRoot.querySelectorAll('.product:not([key])[deleted]'),
+            function(item) {
+              var product = productHost.modelForElement(item).product;
+              model.arrayDelete('student.products',product);
+            });
 
-          //update products
-          [].forEach.call(studentRoot.querySelectorAll('.product[key]:not([deleted]) [name="updateProduct"]'),
-          function(ajax) {
-            var product = productHost.modelForElement(ajax).product;
-            oldstudent.products.forEach(function(old) {
-              if(old._id==product._id) {
-                if(old.price!==product.price) {
-                  console.log('update product');
-                  ajax.studentModel = model;
-                  ajax.body = JSON.stringify({
-                    price: product.price
-                  });
-                  ajax.generateRequest();
-                  self.pendReload(model);
+            //update products
+            [].forEach.call(studentRoot.querySelectorAll('.product[key]:not([deleted]) [name="updateProduct"]'),
+            function(ajax) {
+              var product = productHost.modelForElement(ajax).product;
+              oldstudent.products.forEach(function(old) {
+                if(old._id==product._id) {
+                  if(old.price!==product.price) {
+                    console.log('update product');
+                    ajax.studentModel = model;
+                    ajax.body = JSON.stringify({
+                      price: product.price
+                    });
+                    ajax.generateRequest();
+                    self.pendReload(model);
+                  }
                 }
-              }
+              });
+              model.arrayDelete('student.products',product);
             });
-            model.arrayDelete('student.products',product);
-          });
 
-          //update payments
-          var paymentHost = studentRoot.querySelector( '[name="payment-repeat"]');
-          [].forEach.call(studentRoot.querySelectorAll('.payment[key] [name="updatePayment"]'),
-          function(ajax) {
-            var paymentModel = paymentHost.modelForElement(ajax);
-            var payment = paymentModel.payment;
-            console.log(payment.dueAmount);
-            console.log(payment.paidAmount);
-            var send = {
-              paidAmount : payment.paidAmount,
-              paid : +payment.dueAmount===+payment.paidAmount,
-              paidDate : new Date().toISOString()
-            };
-            console.log(send);
-            student._old_payments.forEach(function(oldpayment) {
-              if(oldpayment._id === payment._id) {
-                if(+oldpayment.paidAmount !== +payment.paidAmount) {
-                  ajax.studentModel = model;
-                  ajax.body = JSON.stringify(send);
-                  ajax.generateRequest();
-                  self.pendReload(model);
-                } else {
-                  paymentModel.set('payment.paidAmount',oldpayment.paidAmount);
+            //update payments
+            var paymentHost = studentRoot.querySelector( '[name="payment-repeat"]');
+            [].forEach.call(studentRoot.querySelectorAll('.payment[key] [name="updatePayment"]'),
+            function(ajax) {
+              var paymentModel = paymentHost.modelForElement(ajax);
+              var payment = paymentModel.payment;
+              console.log(payment.dueAmount);
+              console.log(payment.paidAmount);
+              var send = {
+                paidAmount : payment.paidAmount,
+                paid : +payment.dueAmount===+payment.paidAmount,
+                paidDate : new Date().toISOString()
+              };
+              console.log(send);
+              student._old_payments.forEach(function(oldpayment) {
+                if(oldpayment._id === payment._id) {
+                  if(+oldpayment.paidAmount !== +payment.paidAmount) {
+                    ajax.studentModel = model;
+                    ajax.body = JSON.stringify(send);
+                    ajax.generateRequest();
+                    self.pendReload(model);
+                  } else {
+                    paymentModel.set('payment.paidAmount',oldpayment.paidAmount);
+                  }
                 }
-              }
+              });
             });
-          });
-        } else {
-          //cleanup
-          if(model.student._id === undefined) {
-            self.arrayDelete('students',model.student);
+          } else {
+            //cleanup
+            if(model.student._id === undefined) {
+              self.arrayDelete('students',model.student);
+            }
+            self.reloadStudent(model);
           }
-          self.reloadStudent(model);
+        } else {
+
         }
       }
       ,_runSync : function(e) {

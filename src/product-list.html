@@ -41,13 +41,14 @@
             key$="[[product._id]]" editing$="[[product._editing]]" viewing$="[[!product._editing]]">
           <form is="iron-form">
             <div class="list-row title content">
-              <div class="control" style="flex-grow:1">
-                <div class="text">
-                  <p>[[product.name]]</p>
+              <expand-button opened="{{product._expanded}}" on-close="_onCancel">
+                <div class="control" style="flex-grow:1">
+                  <div class="text">
+                    <p>[[product.name]]</p>
+                  </div>
+                  <paper-input class="input" value="{{product.name}}" label="Name" size="28" required error-message="Required" dir="rtl"></paper-input>
                 </div>
-                <paper-input class="input" value="{{product.name}}" label="Name" size="50" required error-message="Required" dir="rtl"></paper-input>
-              </div>
-              <expand-button opened="{{product._expanded}}" on-close="_onCancel"></expand-button>
+              </expand-button>
             </div>
             <iron-collapse opened="[[product._expanded]]">
               <div class="list-column">
@@ -58,7 +59,7 @@
                         <label>Price</label>
                         <p>[[product.price]]</p>
                       </div>
-                      <paper-input class="input" label="Price" value="{{product.price}}" required error-message="Required" dir="rtl"></paper-input>
+                      <paper-input type=number class="input" label="Price" value="{{product.price}}" required error-message="Required" dir="rtl"></paper-input>
                     </div>
 
                     <div class="control">
@@ -83,22 +84,22 @@
                   <paper-button class="drop" hidden$="[[isNew(product)]]" on-tap="_onDropProduct"><iron-icon icon="delete"></iron-icon>Delete</paper-button>
                   <iron-ajax name="createProduct"
                     url="http://seerio.us/kdlproxy/products/"
-                    on-response="_onUpdateResponse"
-                    on-error="_onError"
+                    on-response="_onCreateResponse"
+                    on-error="_onCreateError"
                     content-type="application/json"
                     method="POST"
                     ></iron-ajax>
                   <iron-ajax name="dropProduct"
                     url="http://seerio.us/kdlproxy/products/[[product._id]]"
                     on-response="_onDropResponse"
-                    on-error="_onModifyError"
+                    on-error="_onDropError"
                     content-type="application/json"
                     method="DELETE"
                     ></iron-ajax>
                   <iron-ajax name="updateProduct"
                     url="http://seerio.us/kdlproxy/products/[[product._id]]"
                     on-response="_onUpdateResponse"
-                    on-error="_onModifyError"
+                    on-error="_onUpdateError"
                     content-type="application/json"
                     method="PUT"
                     ></iron-ajax>
@@ -116,6 +117,12 @@
     </div>
   </template>
   <script>
+    function UT(elem,tag,attr) {
+        var e = elem;
+        while(e && (e.tagName.toLowerCase() != tag.toLowerCase() || attr && !e.hasAttribute(attr)))
+          e = e.parentNode;
+        return e && e.nodeType == 1 ? e : null;
+    }
     Polymer({
       is: 'product-list',
       properties : {
@@ -138,16 +145,31 @@
        *  Server responses
        *
        */
-      ,_onUpdateResponse : function(e) {
+      ,_onCreateResponse : function(e) {
         if(!e.detail.response.message) {
           var c = e.detail.response;
           e.model.set('product._id',c._id);
-          //TODEL:
-          //e.model.set('product._id','111');
         } else {
           e.model.set('product._editing',true);
           this.fire('page-error',{ message: e.detail.response.message } );
         }
+      }
+      ,_onCreateError : function(e) {
+        e.model.set('product._editing',true);
+        this.fire('page-error',{ message: "Server can't add this product" } );
+      }
+      ,_onUpdateResponse : function(e) {
+        if(!e.detail.response.message) {
+          var c = e.detail.response;
+          e.model.set('product._id',c._id);
+        } else {
+          e.model.set('product._editing',true);
+          this.fire('page-error',{ message: e.detail.response.message } );
+        }
+      }
+      ,_onUpdateError : function(e) {
+        e.model.set('product._editing',true);
+        this.fire('page-error',{ message: "Server can't modifify this product" } );
       }
       ,_onDropResponse : function(e) {
         if(!e.detail.response.message) {
@@ -157,17 +179,13 @@
           this.fire('page-error',{ message: e.detail.response.message } );
         }
       }
+      ,_onDropResponse : function(e) {
+        e.model.set('product._editing',true);
+        this.fire('page-error',{ message: "Server can't delete this product" } );
+      }
       ,_onGetProductsResponse : function(e) {
         this.domHost.set('loaded',true);
         if(!e.detail.response.message) {
-          //TODEL:
-          /*e.detail.response.forEach(function(x,i) { 
-            x._id = ''+(1+i); 
-            x.name = 'Kfar Yehezkel 2 Times a week'; 
-            x.price = '1000';
-            x.billingPeriod = 'monthly';
-          });*/
-
           e.detail.response.forEach(function(x) { 
             x._editing = false ; 
           });
@@ -218,32 +236,36 @@
       ,_onSave : function(e) {
         var model = e.model;
         var product = e.model.product;
-        
-        model.set('product._editing', false);
-        if(product._id === undefined) {
-          //create product
-          console.log('create product');
-          var ajax = e.target.parentNode.querySelector('[name="createProduct"]');
-          ajax.body = JSON.stringify({
-                name :  product.name,
-                billingPeriod : product.billingPeriod,
-                price : product.price
-              });
-          ajax.generateRequest();          
-        } else if(product._id !== undefined) {
-          //update product
-          console.log('update product');
-          var item = this.$$('.list-item[key="'+product._id+'"]');
-          var ajax = item.querySelector('[name="updateProduct"]');
-          ajax.body = JSON.stringify({
-                name :  product.name,
-                billingPeriod : product.billingPeriod,
-                price : product.price
-              });
-          ajax.generateRequest();
+        var form = UT(e.target,'form');
+        if(form.validate()) {
+          model.set('product._editing', false);
+          if(product._id === undefined) {
+            //create product
+            console.log('create product');
+            var ajax = e.target.parentNode.querySelector('[name="createProduct"]');
+            ajax.body = JSON.stringify({
+                  name :  product.name,
+                  billingPeriod : product.billingPeriod,
+                  price : product.price
+                });
+            ajax.generateRequest();          
+          } else if(product._id !== undefined) {
+            //update product
+            console.log('update product');
+            var item = this.$$('.list-item[key="'+product._id+'"]');
+            var ajax = item.querySelector('[name="updateProduct"]');
+            ajax.body = JSON.stringify({
+                  name :  product.name,
+                  billingPeriod : product.billingPeriod,
+                  price : product.price
+                });
+            ajax.generateRequest();
+          } else {
+            //cleanup
+            this._onCancel(e);
+          }
         } else {
-          //cleanup
-          this._onCancel(e);
+
         }
       }
       ,_onCancel : function(e) {

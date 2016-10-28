@@ -29,7 +29,8 @@
     "paper-dialog": "PolymerElements/paper-dialog#^1.1.0",
     "neon-animation": "PolymerElements/neon-animation#^1.2.4",
     "paper-checkbox": "PolymerElements/paper-checkbox#^1.4.0",
-    "paper-dropdown-menu": "PolymerElements/paper-dropdown-menu#^1.3.5"
+    "paper-dropdown-menu": "PolymerElements/paper-dropdown-menu#^1.3.5",
+    "gold-phone-input": "PolymerElements/gold-phone-input#^1.1.0"
   },
   "devDependencies": {
     "iron-component-page": "PolymerElements/iron-component-page#^1.0.0",

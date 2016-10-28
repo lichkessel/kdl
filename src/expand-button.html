@@ -3,8 +3,18 @@
 <link rel="import" href="../bower_components/iron-icons/iron-icons.html">
 
 <dom-module id="expand-button">
+  <style>
+  :host {
+    display:flex;
+    flex-grow:1;
+    flex-direction:column;
+  }
+  </style>
   <template>
-    <paper-icon-button icon$="[[icon(opened)]]" on-tap="_toggle"></paper-icon-button>
+    <div style="display:flex;flex-direction:column" on-tap="_toggle">
+      <paper-icon-button icon$="[[icon(opened)]]" on-tap="_fullToggle" style="align-self:flex-end;margin-bottom:-40px"></paper-icon-button>
+      <content></content>
+    </div>
   </template>
   <script>
   Polymer({
@@ -16,14 +26,20 @@
         value:false
       }
     }
-    ,_toggle : function(exp) {
+    ,_fullToggle : function(exp) {
       if(this.opened) {
         this.fire('close', null);
       } else {
         this.fire('open', null);
       }
       this.set('opened', !this.opened);
-
+      exp.stopPropagation();
+    }
+    ,_toggle : function(exp) {
+      if(this.opened) 
+        return;
+      else 
+        this._fullToggle(exp);
     }
     ,icon : function(exp) {
       return exp ? 'expand-less' : 'expand-more';
