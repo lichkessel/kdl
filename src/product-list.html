@@ -24,7 +24,28 @@
 <dom-module id="product-list">
   <template>
     <style include="shared-styles"></style>
-
+    <style>
+      paper-dropdown-menu {
+        --paper-dropdown-menu-input : {
+          direction:rtl;
+        };
+        --paper-input-container-input : {
+          text-align:start;
+          direction:rtl;
+        };
+        --paper-input-container-label : {
+          direction:rtl;
+          text-align:start;
+        };
+        --paper-input-container-underline : {
+          direction:rtl;
+          text-align:start;
+        };
+      }
+      paper-dropdown-menu {
+        margin-bottom:10px;
+      }
+    </style>
     <!-- url="http://seerio.us/kdlproxy/products"  -->
     <iron-ajax id="get"
       url="http://seerio.us/kdlproxy/products"
@@ -59,7 +80,7 @@
                         <label>Price</label>
                         <p>[[product.price]]</p>
                       </div>
-                      <paper-input type=number class="input" label="Price" value="{{product.price}}" required error-message="Required" dir="rtl"></paper-input>
+                      <paper-input class="input" label="Price" value="{{product.price}}" required error-message="Required" dir="rtl" allowed-pattern="[0-9]"></paper-input>
                     </div>
 
                     <div class="control">
@@ -67,8 +88,9 @@
                         <label>Billing period</label>
                         <p>[[product.billingPeriod]]</p>
                       </div>
-                      <paper-dropdown-menu class="input" label="Billing period"  value="{{product.billingPeriod}}" required error-message="Required" dir="rtl">
+                      <paper-dropdown-menu class="input" label="Billing period" value="{{product.billingPeriod}}" required error-message="Required">
                         <paper-listbox attr-for-selected="val" selected="[[product.billingPeriod]]" class="dropdown-content">
+                          <paper-item val="oneTime">oneTime</paper-item>
                           <paper-item val="weekly">weekly</paper-item>
                           <paper-item val="monthly">monthly</paper-item>
                           <paper-item val="quartal">quartal</paper-item>
@@ -176,10 +198,10 @@
           this.arrayDelete('products',e.model.product);
         } else {
           e.model.set('product._editing',true);
-          this.fire('page-error',{ message: e.detail.response.message } );
+          this.fire('page-error',{ message: "Server can't delete this product" } );
         }
       }
-      ,_onDropResponse : function(e) {
+      ,_onDropError : function(e) {
         e.model.set('product._editing',true);
         this.fire('page-error',{ message: "Server can't delete this product" } );
       }

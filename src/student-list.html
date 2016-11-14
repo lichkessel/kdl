@@ -18,12 +18,20 @@
 
 <link rel="import" href="../bower_components/gold-phone-input/gold-phone-input.html">
 
+
 <link rel="import" href="./shared-styles.html">
 <link rel="import" href="./expand-button.html">
 
 <dom-module id="student-list">
   <template>
     <style include="shared-styles"></style>
+    <style>
+      gold-phone-input {
+        --gold-phone-input-country-code : {
+          display:none;
+        }
+      }
+    </style>
     <!-- url="https://jsonplaceholder.typicode.com/posts"  -->
     <iron-ajax id="get"
       url="http://seerio.us/kdlproxy/students"
@@ -60,7 +68,9 @@
                       </div>
                       <!--paper-input class="input" label="Phone" value="{{student.phoneNumber}}" required error-message="Required" dir="rtl" disabled="[[!student._editing]]"></paper-input-->
                       <gold-phone-input class="input" dir="rtl" required label="Phone" value="{{student.phoneNumber}}" error-message="Must be a phone number" disabled="[[!student._editing]]" maxlength="12"></gold-phone-input>
+
                     </div>
+                    <div><paper-button raised on-tap="_remind">Send reminder</paper-button></div>
                   </div>
                   <table class="item-table">
                     <thead>
@@ -120,7 +130,23 @@
                             <div class="text">[[product.baseProduct.billingPeriod]]</div>
                           </td-->
                         </tr>
-                        <tr><td colspan="2" class="sub-info"><span hidden$="[[!product.dateCreated]]">started [[FD(product.dateCreated)]]</span></td></tr>
+                        <tr>
+                          <td colspan="2" class="sub-info control">
+                            <!--span hidden$="[[!product.dateCreated]]">started [[FD(product.dateCreated)]]</span-->
+                            <div class="text">started [[FD(product.dateCreated)]]</div>
+                            <div class="input">
+                              <paper-input
+                                name="product-created"
+                                label="Starts"
+                                type="date"
+                                value="{{product._dateCreated_}}"
+                                disabled$="[[product._deleted_]]"
+                                dir="rtl"
+                                auto-validate
+                              ></paper-input>
+                            </div>
+                          </td>
+                        </tr>
                       </template>
                     </tbody>
                   </table>
@@ -180,13 +206,13 @@
                   <iron-ajax name="createStudent"
                     url="http://seerio.us/kdlproxy/students"
                     on-response="_onCreateResponse"
-                    on-error="_onUpdateError"
+                    on-error="_onCreateError"
                     content-type="application/json"
                     method="POST"
                     ></iron-ajax>
                   <iron-ajax name="dropStudent"
                     url="http://seerio.us/kdlproxy/students/[[student._id]]"
-                    on-response="_onCreateResponse"
+                    on-response="_onDropResponse"
                     on-error="_onDropError"
                     content-type="application/json"
                     method="DELETE"
@@ -216,6 +242,13 @@
                     url="http://seerio.us/kdlproxy/payments/student/[[student._id]]"
                     on-response="_onGetPaymentsResponse"
                     on-error="_onGetPaymentsError"
+                    content-type="application/json"
+                    method="GET"
+                    ></iron-ajax>
+                  <iron-ajax name="remind"
+                    url="http://seerio.us/kdlproxy/payments/reminder/[[student._id]]"
+                    on-response="_onRemindResponse"
+                    on-error="_onRemindError"
                     content-type="application/json"
                     method="GET"
                     ></iron-ajax>
@@ -254,6 +287,7 @@
         }
       }
       ,PHONE : function(p) {
+        return p;
         return p ? ('+1 '+p) : p;
       }
       ,ZERO : function(d) {
@@ -282,6 +316,11 @@
       }
       ,prepareStudent : function(student) {
         student.sync = false;
+        student.products.forEach(function(product) {
+          if(product.dateCreated) {
+            product._dateCreated_ = new Date(product.dateCreated).toISOString().substr(0,10)
+          }
+        })
         student.payments = [];
         student._editing = false;
       }
@@ -442,6 +481,12 @@
       ,_onSyncError : function(e) {
         this.fire('page-error',{ message: "Can not syncronize payment information." } );
       }
+      ,_onRemindResponse : function(e) {
+        console.log(e);
+      }
+      ,_onRemindError : function() {
+        this.fire('page-error',{ message: "Can not send reminder to student." } );
+      }
       /*
        *
        *  Commands execution
@@ -504,6 +549,11 @@
           }); 
         }
       }
+      ,_remind : function(e) {
+        var ajax = this.$$('.student[key="'+e.model.student._id+'"] [name="remind"]');
+        ajax.body = '';
+        ajax.generateRequest();
+      }
       ,_editMode : function(e) {
         e.model._originalStudentItem_ = JSON.parse(JSON.stringify(e.model.student));
         e.model.set('student._editing',true);
@@ -535,7 +585,11 @@
                   fullName :  student.fullName,
                   phoneNumber : student.phoneNumber,
                   products : student.products.map(function(p) {
-                    return { baseProduct: p.baseProduct._id, price: p.price }
+                    return { 
+                      baseProduct: p.baseProduct._id, 
+                      price: p.price,
+                      dateCreated : new Date(p._dateCreated_).toISOString()
+                    }
                   })
                 });
             ajax.generateRequest();          
@@ -595,11 +649,12 @@
               var product = productHost.modelForElement(ajax).product;
               oldstudent.products.forEach(function(old) {
                 if(old._id==product._id) {
-                  if(old.price!==product.price) {
+                  if(old.price!==product.price || old._dateCreated_ !== product._dateCreated_) {
                     console.log('update product');
                     ajax.studentModel = model;
                     ajax.body = JSON.stringify({
-                      price: product.price
+                      price: product.price,
+                      dateCreated : new Date(product._dateCreated_).toISOString()
                     });
                     ajax.generateRequest();
                     self.pendReload(model);
