@@ -62,7 +62,7 @@
             key$="[[product._id]]" editing$="[[product._editing]]" viewing$="[[!product._editing]]">
           <form is="iron-form">
             <div class="list-row title content">
-              <expand-button opened="{{product._expanded}}" on-close="_onCancel">
+              <expand-button opened="{{product._expanded}}" on-close="_onCancel" area-suspend="[[product._editing]]">
                 <div class="control" style="flex-grow:1">
                   <div class="text">
                     <p>[[product.name]]</p>
