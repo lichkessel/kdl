@@ -48,7 +48,7 @@
             key$="[[student._id]]" editing$="[[student._editing]]" viewing$="[[!student._editing]]">
           <form is="iron-form">
             <div class="list-row title content">
-              <expand-button opened="{{student._expanded}}" on-close="_onCancel" on-open="_onOpen">
+              <expand-button opened="{{student._expanded}}" area-suspend="[[student._editing]]" on-close="_onCancel" on-open="_onOpen">
                 <div class="control" style="flex-grow:1">
                 <div class="text">
                   <p>[[student.fullName]]</p>
@@ -134,7 +134,8 @@
                           <td colspan="2" class="sub-info control">
                             <!--span hidden$="[[!product.dateCreated]]">started [[FD(product.dateCreated)]]</span-->
                             <div class="text">started [[FD(product.dateCreated)]]</div>
-                            <div class="input">
+                            <div class="input" hidden$="[[!student._id]]">started [[FD(product.dateCreated)]]</div>
+                            <div class="input" hidden$="[[student._id]]">
                               <paper-input
                                 name="product-created"
                                 label="Starts"

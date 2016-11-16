@@ -24,6 +24,10 @@
         type: Boolean,
         notify:true,
         value:false
+      },
+      areaSuspend : {
+        type: Boolean,
+        value:false
       }
     }
     ,_fullToggle : function(exp) {
@@ -36,7 +40,7 @@
       exp.stopPropagation();
     }
     ,_toggle : function(exp) {
-      if(this.opened) 
+      if(this.areaSuspend) 
         return;
       else 
         this._fullToggle(exp);
